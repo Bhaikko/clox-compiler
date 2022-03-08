@@ -13,12 +13,12 @@
 // Takes care of getting the size of array's element type
 // and casting the resulting void* back to pointer of right type.
 #define GROW_ARRAY(type, pointer, oldCount, newCount) \
-    (type*) rellocate(pointer, sizeof(type) * (oldCount), \
+    (type*) reallocate(pointer, sizeof(type) * (oldCount), \
         sizeof(type) * (newCount))
 
 // Frees the momeory by passing in zero for the new size
 #define FREE_ARRAY(type, pointer, oldCount) \
-    rellocate(pointer, sizeof(type) * (oldCount), 0)
+    reallocate(pointer, sizeof(type) * (oldCount), 0)
 
 /**
  * @brief used for all dynamic memory management in clox

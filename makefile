@@ -2,11 +2,11 @@ CXX = g++
 CPPFLAGS = -std=c++11 -Wall -g
 
 LIBS_CPPS = \
-				./lib/chunk.c \
 				./lib/memory.c \
+				./lib/chunk.c \
 
 SRCS_CPPS = \
 				./src/main.cpp \
 
 run:
-	$(CXX) $(SRCS_CPPS) -o application $(CPPFLAGS)
+	$(CXX) $(LIBS_CPPS) $(SRCS_CPPS) -o application $(CPPFLAGS)
