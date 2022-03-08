@@ -32,4 +32,11 @@ void initChunk(Chunk* chunk);
  */
 void writeChunk(Chunk* chunk, uint8_t byte);
 
+/**
+ * @brief Used to free the memory allocated to Chunk
+ * 
+ * @param chunk 
+ */
+void freeChunk(Chunk* chunk);
+
 #endif
