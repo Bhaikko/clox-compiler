@@ -5,6 +5,7 @@
 #define clox_debug_h
 
 #include "chunk.h"
+#include "value.h"
 
 // Disassemble all the instuctions in the entrie chunk
 void disassembleChunk(Chunk* chunk, const char* name);

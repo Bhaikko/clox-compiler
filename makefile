@@ -5,6 +5,7 @@ UTILITY_CPPS = \
 				./lib/debug.c \
 
 LIBS_CPPS = \
+				./lib/value.c \
 				./lib/memory.c \
 				./lib/chunk.c \
 

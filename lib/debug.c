@@ -17,6 +17,9 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset)
     // Constant values are known at compile times
     printValue(chunk->constants.values[constant]);
     printf("'\n");
+
+    // Since OP_CONSTANT is 2 Byte instruction
+    return offset + 2;
 }
 
 void disassembleChunk(Chunk* chunk, const char* name)
