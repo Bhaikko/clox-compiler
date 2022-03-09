@@ -20,6 +20,7 @@ typedef struct {
     int count;          // Number of used elements
     int capacity;       // Number of allocated elements
     uint8_t* code;      // Dynamic array for ByteCode
+    int* lines;         // Stores line number for every byte in code
     ValueArray constants;   // Pool of constants values
 } Chunk;
 
@@ -27,7 +28,8 @@ typedef struct {
 void initChunk(Chunk* chunk);
 
 // To append byte to the end of the chunk
-void writeChunk(Chunk* chunk, uint8_t byte);
+// Compiler will track of current line
+void writeChunk(Chunk* chunk, uint8_t byte, int line);
 
 // Used to free the memory allocated to Chunk
 void freeChunk(Chunk* chunk);

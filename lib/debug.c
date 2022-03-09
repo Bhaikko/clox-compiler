@@ -38,6 +38,14 @@ int disassembleInstruction(Chunk* chunk, int offset)
     // Useful in control flow
     printf("%04d ", offset);
 
+    // Printing Line number from Source code
+    if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
+        // If current instruction is from same line as precedding one
+        printf("   | ");
+    } else {
+        printf("%4d ", chunk->lines[offset]);
+    }
+
     uint8_t instruction = chunk->code[offset];
 
     switch (instruction) {
@@ -48,7 +56,7 @@ int disassembleInstruction(Chunk* chunk, int offset)
             return simpleInstruction("OP_RETURN", offset);
 
         default:
-            printf("UNknown opcode %d\n", instruction);
+            printf("Unknown opcode %d\n", instruction);
             return offset + 1;
     }
 }
