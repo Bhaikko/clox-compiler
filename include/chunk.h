@@ -5,6 +5,7 @@
 #define clox_chunk_h
 
 #include "common.h"
+#include "value.h"
 
 // Defining opcodes for VM
 typedef enum {
@@ -15,28 +16,23 @@ typedef struct {
     int count;          // Number of used elements
     int capacity;       // Number of allocated elements
     uint8_t* code;      // Dynamic array for ByteCode
+    ValueArray constants;   // Pool of constants values
 } Chunk;
 
-/**
- * @brief Used to initialize Chunk dynamic Array
- * 
- * @param chunk 
- */
+// Used to initialize Chunk dynamic Array
 void initChunk(Chunk* chunk);
 
-/**
- * @brief To append byte to the end of the chunk
- * 
- * @param chunk 
- * @param byte 
- */
+// To append byte to the end of the chunk
 void writeChunk(Chunk* chunk, uint8_t byte);
 
-/**
- * @brief Used to free the memory allocated to Chunk
- * 
- * @param chunk 
- */
+// Used to free the memory allocated to Chunk
 void freeChunk(Chunk* chunk);
+
+/**
+ * @brief To add a constant to constant pool
+ * 
+ * @return int index of added constant
+ */
+int addConstant(Chunk* chunk, Value value);
 
 #endif
