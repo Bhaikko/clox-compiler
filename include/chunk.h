@@ -9,6 +9,10 @@
 
 // Defining opcodes for VM
 typedef enum {
+    // 2 Byte Instruction 
+    OP_CONSTANT,        // Need constant index
+
+    // 1 Byte Instuction
     OP_RETURN           // Return from current Function
 } OpCode;
 
