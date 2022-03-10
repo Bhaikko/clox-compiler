@@ -13,8 +13,6 @@ void disassembleChunk(Chunk* chunk, const char* name);
 /**
  * @brief Disassemble a single instruction
  * 
- * @param chunk 
- * @param offset 
  * @return int offset of next instruction after deassembling current
  */
 int disassembleInstruction(Chunk* chunk, int offset);

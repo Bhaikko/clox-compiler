@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "./../include/debug.h"
 #include "./../include/vm.h"
 
 // Since the VM object will be passed as arguement to all function
@@ -25,6 +26,17 @@ static InterpretResult run()
     #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 
         for (;;) {
+            #ifdef DEBUG_TRACE_EXECUTION
+                // Prints each instruction right before executing it
+                // Disassembles instruction dynamically
+                disassembleInstruction(
+                    vm.chunk, 
+                    // Converting IP to relative offset from beginning of bytecode
+                    (int)(vm.ip - vm.chunk->code)   
+                );
+            #endif
+
+
             // Decoding / Dispatching the instruction
             uint8_t instruction;
 
