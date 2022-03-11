@@ -13,6 +13,11 @@ typedef enum {
     OP_CONSTANT,        // Need constant index
 
     // 1 Byte Instuction
+    OP_NEGATE,          // Negates the operand
+    OP_ADD,             // Adds the operands at top of stack
+    OP_SUBTRACT,
+    OP_MULTIPLY,
+    OP_DIVIDE,
     OP_RETURN           // Return from current Function
 } OpCode;
 

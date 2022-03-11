@@ -16,6 +16,7 @@ typedef struct {
     // instruction pointer, pointing to next instruction in bytecode to be executed
     uint8_t* ip;    
 
+    // Stack of operands, acts like a shared workspace for instructions
     Value stack[STACK_MAX];
     // Will point to index next to top, to where the next pushed element will go
     Value* stackTop;    
