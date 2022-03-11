@@ -7,9 +7,14 @@
 // We maintain a global VM object
 VM vm;
 
+static void resetStack()
+{
+    vm.stackTop = vm.stack;
+}
+
 void initVM()
 {
-
+    resetStack();
 }
 
 void freeVM()
@@ -27,6 +32,15 @@ static InterpretResult run()
 
         for (;;) {
             #ifdef DEBUG_TRACE_EXECUTION
+                // Printing Values of Stack before executing current instruction
+                printf("             ");
+                for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
+                    printf("[ ");
+                    printValue(*slot);
+                    printf(" ]");
+                }
+                printf("\n");
+
                 // Prints each instruction right before executing it
                 // Disassembles instruction dynamically
                 disassembleInstruction(
@@ -44,12 +58,13 @@ static InterpretResult run()
             switch (instruction = READ_BYTE()) {
                 case OP_CONSTANT: {
                     Value constant = READ_CONSTANT();
-                    printValue(constant);
-                    printf("\n");
+                    push(constant);
                     break;
                 }
 
                 case OP_RETURN: {
+                    printValue(pop());
+                    printf("\n");
                     return INTERPRET_OK;
                 }
             }
@@ -65,4 +80,16 @@ InterpretResult interpret(Chunk* chunk)
     vm.chunk = chunk;
     vm.ip = vm.chunk->code; // Initialize IP to first byte of code
     return run();
+}
+
+void push(Value value)
+{
+    *vm.stackTop = value;
+    vm.stackTop++;
+}
+
+Value pop()
+{
+    vm.stackTop--;
+    return *vm.stackTop;
 }
