@@ -14,4 +14,4 @@ SRCS_CPPS = \
 				./src/main.cpp \
 
 run:
-	$(CXX) $(UTILITY_CPPS) $(LIBS_CPPS) $(SRCS_CPPS) -o application $(CPPFLAGS)
+	$(CXX) $(UTILITY_CPPS) $(LIBS_CPPS) $(SRCS_CPPS) -o clox $(CPPFLAGS)
