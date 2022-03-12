@@ -12,5 +12,3 @@ void initScanner(const char* source)
     scanner.current = source;
     scanner.line = 1;
 }
-
-void 
