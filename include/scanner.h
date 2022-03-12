@@ -31,6 +31,8 @@ typedef enum {
     TOKEN_EOF
 } TokenType;
 
+// Token does not store the literal value but only lexeme
+// Compiler will convert the lexeme value to runtime representation
 typedef struct {
     TokenType type;
     const char* start;  // Pointer to token string in source code

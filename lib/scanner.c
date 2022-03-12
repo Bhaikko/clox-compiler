@@ -74,6 +74,11 @@ static bool match(char expected)
     return true;
 }
 
+static bool isDigit(char c)
+{
+    return c >= '0' && c <= '9';
+}
+
 // Skips whitespaces and sets current pointer to a valid one
 static void skipWhitespace()
 {
@@ -109,6 +114,44 @@ static void skipWhitespace()
     }
 }
 
+static Token string()
+{
+    while (peek() != '"' && !isAtEnd()) {
+        // Support for multi line strings
+        if (peek() == '\n') {
+            scanner.line++;
+        }
+        advance();
+    }
+
+    if (isAtEnd()) {
+        return errorToken("Unterminated string.");
+    }
+
+    advance();
+    return makeToken(TOKEN_STRING);
+}
+
+// Return lexeme representation of number
+// Does not convert lexeme to double 
+static Token number()
+{
+    while (isDigit(peek())) {
+        advance();
+    }
+
+    // Looking for fractional part
+    if (peek() == '.' && isDigit(peekNext())) {
+        advance();
+
+        while (isDigit(peek())) {
+            advance();
+        }
+    }
+
+    return makeToken(TOKEN_NUMBER);
+}
+
 void initScanner(const char* source)
 {
     scanner.start = source;
@@ -129,6 +172,10 @@ Token scanToken()
     }
 
     char c = advance();
+
+    if (isDigit(c)) {
+        return number();
+    }
 
     switch (c) {
     // Handling Punctutations
@@ -168,6 +215,9 @@ Token scanToken()
             return makeToken(
                 match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER
             );
+
+        case '"':
+            return string();
         
     }
 
