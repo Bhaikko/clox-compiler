@@ -35,10 +35,78 @@ static Token errorToken(const char* message)
     return token;
 }
 
+// Returns current character with advancing the current pointer 
 static char advance()
 {
     scanner.current++;
     return scanner.current[-1];
+}
+
+// Returns current character without consuming
+static char peek()
+{
+    return *scanner.current;
+}
+
+// Returns one look ahead character
+static char peekNext()
+{
+    if (isAtEnd()) {
+        return '\0';
+    }
+
+    return scanner.current[1];
+}
+
+// Matches current character with expected character
+// Only advances if expected character matches
+static bool match(char expected)
+{
+    if (isAtEnd()) {
+        return false;
+    }
+
+    if (*scanner.current != expected) {
+        return false;
+    }
+
+    scanner.current++;
+    return true;
+}
+
+// Skips whitespaces and sets current pointer to a valid one
+static void skipWhitespace()
+{
+    for (;;) {
+        char c = peek();
+        switch (c) {
+            case ' ':
+            case '\r':
+            case '\t':
+                advance();
+                break;
+
+            case '\n':
+                scanner.line++;
+                advance();
+                break;
+
+            // Skipping comments 
+            case '/':
+                if (peekNext() == '/') {
+                    while (peek() != '\n' && !isAtEnd()) {
+                        advance();
+                    }
+                } else {
+                    return;
+                }
+
+                break;
+
+            default:
+                return;
+        }
+    }
 }
 
 void initScanner(const char* source)
@@ -50,6 +118,9 @@ void initScanner(const char* source)
 
 Token scanToken() 
 {
+    // Skipping Whitespaces
+    skipWhitespace();
+
     scanner.start = scanner.current;
 
     // Sent to compiler to stop asking for more tokens
@@ -60,6 +131,8 @@ Token scanToken()
     char c = advance();
 
     switch (c) {
+    // Handling Punctutations
+        // Single character token
         case '(': return makeToken(TOKEN_LEFT_PAREN);
         case ')': return makeToken(TOKEN_RIGHT_PAREN);
         case '{': return makeToken(TOKEN_LEFT_BRACE);
@@ -71,6 +144,31 @@ Token scanToken()
         case '+': return makeToken(TOKEN_PLUS);
         case '/': return makeToken(TOKEN_SLASH);
         case '*': return makeToken(TOKEN_STAR);
+
+        // Two character token
+        case '!':
+            return makeToken(
+                match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG
+            );
+
+        
+        case '=':
+            return makeToken(
+                match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL
+            );
+
+        
+        case '<':
+            return makeToken(
+                match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS
+            );
+
+        
+        case '>':
+            return makeToken(
+                match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER
+            );
+        
     }
 
     return errorToken("Unexpected character.");
