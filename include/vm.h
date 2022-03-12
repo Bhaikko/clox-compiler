@@ -33,7 +33,7 @@ typedef enum {
 void initVM();
 void freeVM();
 
-InterpretResult interpret(Chunk* chunk);
+InterpretResult interpret(const char* chunk);
 
 // To push value at top pointer
 void push(Value value);

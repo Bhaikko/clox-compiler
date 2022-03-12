@@ -9,6 +9,8 @@ LIBS_CPPS = \
 				./lib/memory.c \
 				./lib/chunk.c \
 				./lib/vm.c \
+				./lib/scanner.c \
+				./lib/compiler.c \
 
 SRCS_CPPS = \
 				./src/main.cpp \
