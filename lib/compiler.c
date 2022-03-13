@@ -6,35 +6,6 @@
 
 Parser parser;
 
-static void advance()
-{
-    // Storing previous token in parser before advancing
-    parser.previous = parser.current;
-
-    // Keeps looping until non error token is encountered
-    for (;;) {
-        parser.current = scanToken();
-        if (parser.current.type != TOKEN_ERROR) {
-            break;
-        }
-
-        // Parser responsible to report Lexical errors
-        errorAtCurrent(parser.current.start);
-    }
-}
-
-// Checks current token type to passed
-// Prints error if type doesnt match
-static consume(TokenType type, const char* message)
-{
-    if (parser.current.type == type) {
-        advance();
-        return;
-    }
-
-    errorAtCurrent(message);
-}
-
 static void errorAt(Token* token, const char* message)
 {
     if (parser.panicMode) {
@@ -69,6 +40,35 @@ static void errorAtCurrent(const char* message)
     errorAt(&parser.current, message);
 }
 
+static void advance()
+{
+    // Storing previous token in parser before advancing
+    parser.previous = parser.current;
+
+    // Keeps looping until non error token is encountered
+    for (;;) {
+        parser.current = scanToken();
+        if (parser.current.type != TOKEN_ERROR) {
+            break;
+        }
+
+        // Parser responsible to report Lexical errors
+        errorAtCurrent(parser.current.start);
+    }
+}
+
+// Checks current token type to passed
+// Prints error if type doesnt match
+static void consume(TokenType type, const char* message)
+{
+    if (parser.current.type == type) {
+        advance();
+        return;
+    }
+
+    errorAtCurrent(message);
+}
+
 bool compile(const char* source, Chunk* chunk)
 {
     initScanner(source);
@@ -77,7 +77,7 @@ bool compile(const char* source, Chunk* chunk)
     parser.panicMode = false;
 
     advance();
-    expression();
+    // expression();
     consume(TOKEN_EOF, "Expect end of expression.");
 
     return !parser.hadError;

@@ -2,6 +2,7 @@
 #define clox_compiler_h
 
 #include "common.h"
+#include "scanner.h"
 #include "vm.h"
 
 typedef struct {
