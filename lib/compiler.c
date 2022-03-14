@@ -5,6 +5,36 @@
 #include "./../include/scanner.h"
 
 Parser parser;
+Chunk* compilingChunk;
+
+// Writes the given byte to chunk
+static void emitByte(uint8_t byte)
+{
+    writeChunk(currentChunk(), byte, parser.previous.line);
+}
+
+// Helper function to emit opcodes that have operands
+static void emitBytes(uint8_t byte1, uint8_t byte2)
+{
+    emitByte(byte1);
+    emitByte(byte2);
+}
+
+static emitReturn()
+{
+    emitByte(OP_RETURN);
+}
+
+static Chunk* currentChunk()
+{
+    return compilingChunk;
+}
+
+static void endCompiler()
+{
+    // Temporary emit to print the evaluated expression
+    emitReturn();
+}
 
 static void errorAt(Token* token, const char* message)
 {
@@ -73,6 +103,9 @@ bool compile(const char* source, Chunk* chunk)
 {
     initScanner(source);
 
+    // Setting passed Chunk to currently compiled chunk
+    compilingChunk = chunk;
+
     parser.hadError = false;
     parser.panicMode = false;
 
@@ -80,5 +113,6 @@ bool compile(const char* source, Chunk* chunk)
     // expression();
     consume(TOKEN_EOF, "Expect end of expression.");
 
+    endCompiler();
     return !parser.hadError;
 }
