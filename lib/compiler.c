@@ -169,6 +169,47 @@ static void unary()
     }
 }
 
+static void binary()
+{
+    // The value of left operand will end up on stack
+    // Get operator
+    TokenType operatorType = parser.previous.type;
+
+    // Compiling right operand which have higher precedence than current operator
+    ParseRule* rule = getRule(operatorType);
+    parsePrecedence((Precedence)(rule->precedence + 1));
+
+    // Emiting operator instruction that performs the binary operation
+    switch (operatorType) {
+        case TOKEN_PLUS: {
+            emitByte(OP_ADD);
+            break;
+        }
+
+        case TOKEN_MINUS: {
+            emitByte(OP_SUBTRACT);
+            break;
+        }
+
+        case TOKEN_STAR: {
+            emitByte(OP_MULTIPLY);
+            break;
+        }
+
+        case TOKEN_SLASH: {
+            emitByte(OP_DIVIDE);
+            break;
+        }
+
+        default:
+            return;
+    }
+
+    /*
+     The VM will execute the left and right operand code 
+     and leave their values on the stack.
+    */
+}
 
 bool compile(const char* source, Chunk* chunk)
 {
