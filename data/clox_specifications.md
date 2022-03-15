@@ -1,7 +1,7 @@
 # Clox Specifications
 
 ## Parsing technique used
-Operator precedence parsing is used
+Operator precedence (bottom up parser) parsing is used
 
 ## CLox Grammar
 ```

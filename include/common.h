@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 // When defined, the vm debugging will be enabled
+#define DEBUG_PRINT_CODE
 // #define DEBUG_TRACE_EXECUTION
 
 #endif

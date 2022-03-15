@@ -5,6 +5,10 @@
 #include "./../include/compiler.h"
 #include "./../include/scanner.h"
 
+#ifdef DEBUG_PRINT_CODE
+#include "./../include/debug.h"
+#endif
+
 Parser parser;
 Chunk* compilingChunk;
 
@@ -118,6 +122,12 @@ static void endCompiler()
 {
     // Temporary emit to print the evaluated expression
     emitReturn();
+
+#ifdef DEBUG_PRINT_CODE
+    if (!parser.hadError) {
+        disassembleChunk(currentChunk(), "code");
+    }
+#endif
 }
 
 // PARSING FUNCTIONS
@@ -128,7 +138,25 @@ static ParseRule* getRule(TokenType type);
 // Parses any expression at the given precedence level or higher
 static void parsePrecedence(Precedence precedence)
 {
+    advance();
+    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
 
+    // Syntax Error
+    if (prefixRule == NULL) {
+        error("Expect expression.");
+        return;
+    }
+
+    // First, parsing the prefix expression
+    prefixRule();
+
+    // Infix expressions evaluated based on Precedence
+    while (precedence <= getRule(parser.current.type)->precedence) {
+        advance();
+
+        ParseFn infixRule = getRule(parser.previous.type)->infix;
+        infixRule();
+    }
 }
 
 static void expression()
@@ -275,7 +303,7 @@ bool compile(const char* source, Chunk* chunk)
     parser.panicMode = false;
 
     advance();
-    // expression();
+    expression();
     consume(TOKEN_EOF, "Expect end of expression.");
 
     endCompiler();
