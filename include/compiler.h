@@ -15,12 +15,6 @@ typedef struct {
     bool panicMode;     // For synchronizing in case of syntax errors
 } Parser;
 
-typedef struct {
-    ParseFn prefix;     // function to compile a prefix expression starting with token of that type
-    ParseFn infix;      // function to compile an infix expression whose left operand is followed by a token of that type
-    Precedence precedence;  // precedence of an infix expression that uses that token as an operator
-} ParseRule;
-
 /*
  This exists because Praser does not cascade to parse expressions
  of higher precedence. Hence a difference solution is implemented where
@@ -42,6 +36,12 @@ typedef enum {
     PREC_CALL,          // . ()
     PREC_PRIMARY        
 } Precedence;
+
+typedef struct {
+    ParseFn prefix;     // function to compile a prefix expression starting with token of that type
+    ParseFn infix;      // function to compile an infix expression whose left operand is followed by a token of that type
+    Precedence precedence;  // precedence of an infix expression that uses that token as an operator
+} ParseRule;
 
 bool compile(const char* source, Chunk* chunk);
 
