@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "./../include/compiler.h"
 #include "./../include/debug.h"
@@ -20,6 +21,29 @@ void initVM()
 
 void freeVM()
 {
+
+}
+
+// Shows runtime errors thrown by VM
+// variadic function
+// format allows to pass format string like in printf()
+static void runtimeError(const char* format, ...)
+{
+    // Full stack trace will be added later
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+
+    fputs("\n", stderr);
+
+    // Getting current instruction index from Instruction pointer
+    size_t instruction = vm.ip - vm.chunk->code - 1;
+    int line = vm.chunk->lines[instruction];
+    fprintf(stderr, "[line %d] in script\n", line);
+
+    resetStack();
 
 }
 
@@ -74,7 +98,13 @@ static InterpretResult run()
                 case OP_NEGATE: {
                     // An optimisation can be done here which doesnt change stack pointer
                     // Since top pointer ends up at same place
-                    push(-pop());
+
+                    if (!IS_NUMBER(peek(0))) {
+                        runtimeError("Operand must be a number.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
+                    push(NUMBER_VAL(-AS_NUMBER(pop())));
                     break;
                 }
 
@@ -141,4 +171,9 @@ Value pop()
 {
     vm.stackTop--;
     return *vm.stackTop;
+}
+
+Value peek(int distance)
+{
+    return vm.stackTop[-1 - distance];
 }

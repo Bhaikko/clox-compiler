@@ -37,7 +37,11 @@ InterpretResult interpret(const char* chunk);
 
 // To push value at top pointer
 void push(Value value);
+
 // To get value stored just before top pointer
 Value pop();
 
+// To peek at stack value from top
+// distance = 0 is top
+Value peek(int distance);
 #endif
