@@ -18,6 +18,9 @@ typedef enum {
     OP_SUBTRACT,
     OP_MULTIPLY,
     OP_DIVIDE,
+    OP_NIL,             // Keyword NIL
+    OP_TRUE,            // Keyword True
+    OP_FALSE,           // Keyword False
     OP_RETURN           // Return from current Function
 } OpCode;
 
