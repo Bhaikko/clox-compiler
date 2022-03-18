@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/clox",
-            "args": ["${workspaceFolder}/test/arithematic.lox"],
+            "args": ["${workspaceFolder}/test/logical.lox"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
