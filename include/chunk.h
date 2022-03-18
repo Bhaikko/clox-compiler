@@ -21,6 +21,13 @@ typedef enum {
     OP_NIL,             // Keyword NIL
     OP_TRUE,            // Keyword True
     OP_FALSE,           // Keyword False
+    OP_NOT,
+    
+    // Below Instructions will be used to compile
+    // <=, =>, != too, eg a != b <==> !(a == b)
+    OP_EQUAL,
+    OP_GREATER,
+    OP_LESS,
     OP_RETURN           // Return from current Function
 } OpCode;
 
