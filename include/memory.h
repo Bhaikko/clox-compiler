@@ -2,8 +2,7 @@
 #define clox_memory_h
 
 #include "common.h"
-
-// MACROS defined in .h file
+#include "object.h"
 
 #define ALLOCATE(type,count) \
         (type*)reallocate(NULL, 0, sizeof(type) * (count))
@@ -22,6 +21,9 @@
 // Frees the momeory by passing in zero for the new size
 #define FREE_ARRAY(type, pointer, oldCount) \
     reallocate(pointer, sizeof(type) * (oldCount), 0)
+
+// Resizes an allocation down to zero bytes
+#define FREE(type, pointer) reallocate(pointer, sizeof(type), 0)
 
 /**
  * @brief used for all dynamic memory management in clox

@@ -20,6 +20,9 @@ typedef struct {
     Value stack[STACK_MAX];
     // Will point to index next to top, to where the next pushed element will go
     Value* stackTop;    
+
+    // Head of Linked List of Object Type Values
+    Obj* objects;
 } VM;
 
 // For interpreter to set the exit code of the process
@@ -28,6 +31,9 @@ typedef enum {
     INTERPRET_COMPILE_ERROR,
     INTERPRET_RUNTIME_ERROR
 } InterpretResult;
+
+// Exposing vm global instance externally
+extern VM vm;
 
 // For handling VM state
 void initVM();
@@ -44,4 +50,8 @@ Value pop();
 // To peek at stack value from top
 // distance = 0 is top
 Value peek(int distance);
+
+// To free all heap allocated objects
+void freeObjects();
+
 #endif

@@ -16,9 +16,20 @@ typedef enum {
     OBJ_STRING,
 } ObjType;
 
+/*
+ Garbage Collector Note:
+ A linked list of Heap allocated objects will be maintained
+ Each Obj will contain ref to next obj 
+ Vm will have the Head pointer
+*/
+
 // Base struct for all heap allocated types
 struct Obj {
     ObjType type;
+
+    // For Linked List node reference
+    // Will be used by Garbage Collector
+    struct Obj* next;
 };
 
 // Defining Obj as first field allows to safely cast it to Obj* 

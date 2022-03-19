@@ -19,11 +19,37 @@ static void resetStack()
 void initVM()
 {
     resetStack();
+    vm.objects = NULL;
 }
 
 void freeVM()
 {
+    // Freeing memory when user program exits
+    freeObjects();
+}
 
+// Freeing Type specifc object memory
+static void freeObject(Obj* object)
+{
+    switch (object->type) {
+        case OBJ_STRING: {
+            ObjString* string = (ObjString*)object;
+            FREE_ARRAY(char, string->chars, string->length + 1);
+            FREE(ObjString, object);
+            break;
+        }
+    }
+}
+
+void freeObjects() 
+{
+    // Walking a linked list and freeing its nodes
+    Obj* object = vm.objects;
+    while (object != NULL) {
+        Obj* next = object->next;
+        freeObject(object);
+        object = next;
+    }
 }
 
 // Shows runtime errors thrown by VM
