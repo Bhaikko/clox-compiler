@@ -6,6 +6,7 @@ UTILITY_CPPS = \
 
 LIBS_CPPS = \
 				./lib/value.c \
+				./lib/object.c \
 				./lib/memory.c \
 				./lib/chunk.c \
 				./lib/vm.c \

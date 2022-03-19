@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "./../include/compiler.h"
 #include "./../include/debug.h"
 #include "./../include/vm.h"
+#include "./../include/memory.h"
 
 // Since the VM object will be passed as arguement to all function
 // We maintain a global VM object
@@ -52,6 +54,27 @@ static void runtimeError(const char* format, ...)
 static bool isFalsey(Value value)
 {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+// Concatenating two strings on top of stack
+static void concatenate()
+{
+    ObjString* b = AS_STRING(pop());
+    ObjString* a = AS_STRING(pop());
+
+    int length = a->length + b->length;
+    char* chars = ALLOCATE(char, length + 1);
+
+    // Copying Two halves in chars
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    chars[length] = '\0';
+
+    // Since ALLOCATE was called above to allocate memory to concatenated string
+    // No need to copy string to new memory
+    ObjString* result = takeString(chars, length);
+    push(OBJ_VAL(result));
+
 }
 
 // Responsible for running bytecode
@@ -137,7 +160,17 @@ static InterpretResult run()
                 }
 
                 case OP_ADD: {
-                    BINARY_OP(NUMBER_VAL, +);
+                    if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                        concatenate();
+                    } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                        double b = AS_NUMBER(pop());
+                        double a = AS_NUMBER(pop());
+                        push(NUMBER_VAL(a + b));
+                    } else {
+                        runtimeError("Operands must be two numbers or two strings.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
                     break;
                 }
 

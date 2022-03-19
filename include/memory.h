@@ -5,6 +5,9 @@
 
 // MACROS defined in .h file
 
+#define ALLOCATE(type,count) \
+        (type*)reallocate(NULL, 0, sizeof(type) * (count))
+
 // Calculates new capacity based on given current capacity
 // Handles both Initial Empty array and full capacity case
 #define GROW_CAPACITY(capacity) \

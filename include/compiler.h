@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "scanner.h"
+#include "object.h"
 #include "vm.h"
 
 // Function type that takes no arguement and returns nothing
