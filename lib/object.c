@@ -22,23 +22,40 @@ static Obj* allocateObject(size_t size, ObjType type)
     return object;
 }
 
-static ObjString* allocateString(char* chars, int length)
+// Calculates hash for a string based on FNV-1a hash function
+static uint32_t hashString(const char* key, int length)
+{
+    uint32_t hash = 2166136261u;
+
+    for (int i = 0; i < length; i++) {
+        hash ^= key[i];
+        hash *= 16777619;
+    }
+
+    return hash;
+}
+
+static ObjString* allocateString(char* chars, int length, uint32_t hash)
 {
     // Calls Base struct function to initialize the Obj state
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
     string->length = length;
     string->chars = chars;
+    string->hash = hash;
 
     return string;
 }
 
 ObjString* takeString(char* chars, int length)
 {
-    return allocateString(chars, length);
+    uint32_t hash = hashString(chars, length);
+    return allocateString(chars, length, hash);
 }
 
 ObjString* copyString(const char* chars, int length)
 {
+    uint32_t hash = hashString(chars, length);
+
     char* heapChars = ALLOCATE(char, length + 1);
     // Not maintaing direct pointer to source code string but
     // Memory is copied to avoid bugs when this string will be freed
@@ -46,7 +63,7 @@ ObjString* copyString(const char* chars, int length)
 
     heapChars[length] = '\0';
 
-    return allocateString(heapChars, length);
+    return allocateString(heapChars, length, hash);
 }
 
 void printObject(Value value)
