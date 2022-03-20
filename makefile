@@ -9,6 +9,7 @@ LIBS_CPPS = \
 				./lib/object.c \
 				./lib/memory.c \
 				./lib/chunk.c \
+				./lib/table.c \
 				./lib/vm.c \
 				./lib/scanner.c \
 				./lib/compiler.c \

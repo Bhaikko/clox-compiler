@@ -20,10 +20,13 @@ void initVM()
 {
     resetStack();
     vm.objects = NULL;
+    initTable(&vm.strings);
 }
 
 void freeVM()
 {
+    freeTable(&vm.strings);
+
     // Freeing memory when user program exits
     freeObjects();
 }

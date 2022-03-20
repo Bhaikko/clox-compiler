@@ -4,6 +4,7 @@
 #include "./../include/object.h"
 #include "./../include/memory.h"
 #include "./../include/value.h"
+#include "./../include/table.h"
 #include "./../include/vm.h"
 
 #define ALLOCATE_OBJ(type, objectType) \
@@ -43,18 +44,40 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash)
     string->chars = chars;
     string->hash = hash;
 
+    // Whenever we create a new unique string, 
+    // we add it to VM string interning table
+    tableSet(&vm.strings, string, NIL_VAL);
+    
+
     return string;
 }
 
 ObjString* takeString(char* chars, int length)
 {
     uint32_t hash = hashString(chars, length);
+    ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
+
+    // If string already exists
+    // We free the duplicate string
+    if (interned != NULL) {
+        FREE_ARRAY(char, chars, length + 1);
+        return interned;
+    }
+
     return allocateString(chars, length, hash);
 }
 
 ObjString* copyString(const char* chars, int length)
 {
     uint32_t hash = hashString(chars, length);
+
+    // Only creating string if it does not exist in 
+    // interning table of VM
+    ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
+
+    if (interned != NULL) {
+        return interned;
+    }
 
     char* heapChars = ALLOCATE(char, length + 1);
     // Not maintaing direct pointer to source code string but

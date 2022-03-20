@@ -7,6 +7,7 @@
 
 #include "chunk.h"
 #include "value.h"
+#include "table.h"
 
 #define STACK_MAX 256
 
@@ -23,6 +24,9 @@ typedef struct {
 
     // Head of Linked List of Object Type Values
     Obj* objects;
+
+    // for string interning
+    Table strings;
 } VM;
 
 // For interpreter to set the exit code of the process
