@@ -14,7 +14,7 @@ typedef struct {
 } Entry;
 
 typedef struct {
-    int count;
+    int count;      // Number of entries + tombstones
     int capacity;   // Load Factor = count / capacity
     Entry* entries;
 } Table;
@@ -26,5 +26,14 @@ void freeTable(Table* table);
 // Inserting entry in Table
 // Returns true if new entry is added
 bool tableSet(Table* table, ObjString* key, Value value);
+
+// Retrieving values from table
+bool tableGet(Table* table, ObjString* key, Value* value);
+
+// Deleting value from table
+bool tableDelete(Table* table, ObjString* key);
+
+// Copying Hash table values
+void tableAddAll(Table* from, Table* to);
 
 #endif
