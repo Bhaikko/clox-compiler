@@ -337,16 +337,64 @@ static void printStatement()
     emitByte(OP_PRINT);
 }
 
+static void expressionStatement()
+{
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+
+    // An expression evalutates the expression and discard the result
+    // Hence POP operation is used to remove top element of Stack
+    emitByte(OP_POP);
+}
+
 static void statement()
 {
     if (match(TOKEN_PRINT)) {
         printStatement();
+    } else {
+        expressionStatement();
+    }
+}
+
+static void synchronize()
+{
+    parser.panicMode = false;
+
+    while (parser.current.type != TOKEN_EOF) {
+
+        // Using Statement boundaries to synchronize
+        if (parser.previous.type == TOKEN_SEMICOLON) {
+            return;
+        }
+
+        // Looing subsequent token that begins a statement
+        // usually one of flow control or declaration keywords
+        switch (parser.current.type) {
+            case TOKEN_CLASS:
+            case TOKEN_FUN:
+            case TOKEN_VAR:
+            case TOKEN_FOR:
+            case TOKEN_IF:
+            case TOKEN_WHILE:
+            case TOKEN_PRINT:
+            case TOKEN_RETURN:
+                return;
+
+            default:
+                break;
+        }
+
+        advance();
     }
 }
 
 static void declaration()
 {
     statement();
+
+    if (parser.panicMode) {
+        synchronize();
+    }
 }
 
 // Parse Rules for the compiler

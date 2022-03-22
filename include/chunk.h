@@ -23,6 +23,7 @@ typedef enum {
     OP_FALSE,           // Keyword False
     OP_NOT,
     OP_PRINT,
+    OP_POP,
     
     // Below Instructions will be used to compile
     // <=, =>, != too, eg a != b <==> !(a == b)
