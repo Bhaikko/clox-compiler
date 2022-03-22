@@ -21,10 +21,12 @@ void initVM()
     resetStack();
     vm.objects = NULL;
     initTable(&vm.strings);
+    initTable(&vm.globals);
 }
 
 void freeVM()
 {
+    freeTable(&vm.globals);
     freeTable(&vm.strings);
 
     // Freeing memory when user program exits
@@ -113,6 +115,9 @@ static InterpretResult run()
     // Increments the Byte pointer
     #define READ_BYTE() (*vm.ip++)
     #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+
+    // Converts and returns the constant value as Object String
+    #define READ_STRING() AS_STRING(READ_CONSTANT())        
 
     // This do block ensures a local scope for macro 
     // Does type checking with performing binary oepration stack
@@ -256,6 +261,31 @@ static InterpretResult run()
                     break;
                 }
 
+                case OP_DEFINE_GLOBAL: {
+                    // Redefinition of GLobal variables allowed
+                    // Hence check for existence avoided
+                    ObjString* name = READ_STRING();
+                    tableSet(&vm.globals, name, peek(0));
+
+                    pop();
+                    break;
+                }
+
+                case OP_GET_GLOBAL: {
+                    ObjString* name = READ_STRING();
+                    Value value;
+
+                    // value is passed as out parameter that contains
+                    // value for the variable name passed
+                    if (!tableGet(&vm.globals, name, &value)) {
+                        runtimeError("Undefined variable '%s'.", name->chars);
+                    }
+
+                    push(value);
+                    break;
+
+                }
+
                 case OP_RETURN: {
                     // Exit Interpreter
                     return INTERPRET_OK;
@@ -265,6 +295,7 @@ static InterpretResult run()
 
     #undef READ_BYTE
     #undef READ_CONSTANT
+    #undef READ_STRING
     #undef BINARY_OP
 }
 

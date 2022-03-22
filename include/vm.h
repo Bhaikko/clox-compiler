@@ -25,6 +25,9 @@ typedef struct {
     // Head of Linked List of Object Type Values
     Obj* objects;
 
+    // Containing Reference to Global Variables
+    Table globals;
+    
     // for string interning
     Table strings;
 } VM;

@@ -179,6 +179,27 @@ static void parsePrecedence(Precedence precedence)
     }
 }
 
+// Defining Variable string name in chunk constant table
+static uint8_t identifierConstant(Token* name)
+{
+    // Since whole string for variable name is too big
+    // to put in 1 byte code
+    // We use Constant Table
+    return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
+static uint8_t parseVariable(const char* errorMessage)
+{
+    consume(TOKEN_IDENTIFIER, errorMessage);
+
+    return identifierConstant(&parser.previous);
+}
+
+static void defineVariable(uint8_t global)
+{
+    emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
 static void expression()
 {
     parsePrecedence(PREC_ASSIGNMENT);
@@ -327,6 +348,19 @@ static void string()
     )));
 }
 
+static void namedVariable(Token name)
+{
+    // Getting index of variable name in constant table
+    uint8_t arg = identifierConstant(&name);
+
+    emitBytes(OP_GET_GLOBAL, arg);
+}
+
+static void variable() 
+{
+    namedVariable(parser.previous);
+}
+
 static void printStatement()
 {
     // Print statement first evaluates the expression then prints it
@@ -354,6 +388,26 @@ static void statement()
     } else {
         expressionStatement();
     }
+}
+
+static void varDeclaration()
+{
+    // Compiles the variable name
+    // Adds variable name to constants table of chunk
+    uint8_t global = parseVariable("Expect variable name.");
+
+    // Checking if there is r-value for the variable declaration
+    if (match(TOKEN_EQUAL)) {
+        expression();
+    } else {
+        // If no assignment then variable assigned to NIL
+        emitByte(OP_NIL);
+    }
+
+    consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+
+    // Adding Byte code with OP code and Constants index
+    defineVariable(global);
 }
 
 static void synchronize()
@@ -390,7 +444,11 @@ static void synchronize()
 
 static void declaration()
 {
-    statement();
+    if (match(TOKEN_VAR)) {
+        varDeclaration();
+    } else {
+        statement();
+    }
 
     if (parser.panicMode) {
         synchronize();
@@ -419,7 +477,7 @@ ParseRule rules[] = {
     [TOKEN_GREATER_EQUAL]   = { NULL,       binary,    PREC_COMPARISON},
     [TOKEN_LESS]            = { NULL,       binary,    PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]      = { NULL,       binary,    PREC_COMPARISON},
-    [TOKEN_IDENTIFIER]      = { NULL,       NULL,      PREC_NONE    },
+    [TOKEN_IDENTIFIER]      = { variable,   NULL,      PREC_NONE    },
     [TOKEN_STRING]          = { string,     NULL,      PREC_NONE    },
     [TOKEN_NUMBER]          = { number,     NULL,      PREC_NONE    },
     [TOKEN_AND]             = { NULL,       NULL,      PREC_NONE    },
