@@ -76,6 +76,23 @@ static void consume(TokenType type, const char* message)
     errorAtCurrent(message);
 }
 
+static bool check(TokenType type)
+{
+    return parser.current.type == type;
+}
+
+// If current token has given type, we consume the token
+// Otherwise, returns false without consuming
+static bool match(TokenType type)
+{
+    if (!check(type)) {
+        return false;
+    }
+
+    advance();
+    return true;
+}
+
 // CODE GENERATION FUNCTIONS
 static Chunk* currentChunk()
 {
@@ -133,6 +150,9 @@ static void endCompiler()
 // PARSING FUNCTIONS
 
 // Forward declaration of functions for parser
+static void expression();
+static void statement();
+static void declaration();
 static ParseRule* getRule(TokenType type);
 
 // Parses any expression at the given precedence level or higher
@@ -307,6 +327,28 @@ static void string()
     )));
 }
 
+static void printStatement()
+{
+    // Print statement first evaluates the expression then prints it
+    expression();
+
+    // Expects a semicolon in the end of statement
+    consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+    emitByte(OP_PRINT);
+}
+
+static void statement()
+{
+    if (match(TOKEN_PRINT)) {
+        printStatement();
+    }
+}
+
+static void declaration()
+{
+    statement();
+}
+
 // Parse Rules for the compiler
 ParseRule rules[] = {
     // Token Type               Prefix      Infix       Precedence       
@@ -369,8 +411,11 @@ bool compile(const char* source, Chunk* chunk)
     parser.panicMode = false;
 
     advance();
-    expression();
-    consume(TOKEN_EOF, "Expect end of expression.");
+    
+    // According to LOX Grammar
+    while (!match(TOKEN_EOF)) {
+        declaration();
+    }
 
     endCompiler();
     return !parser.hadError;

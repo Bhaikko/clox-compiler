@@ -242,9 +242,17 @@ static InterpretResult run()
                     break;
                 }
 
-                case OP_RETURN: {
+                case OP_PRINT: {
+                    // Stack effect of Print is zero
+                    // Since it evaluates the expression and prints it
+                    // Statment produces no values
                     printValue(pop());
                     printf("\n");
+                    break;
+                }
+
+                case OP_RETURN: {
+                    // Exit Interpreter
                     return INTERPRET_OK;
                 }
             }
