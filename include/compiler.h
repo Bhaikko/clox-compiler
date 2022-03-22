@@ -7,7 +7,7 @@
 #include "vm.h"
 
 // Function type that takes no arguement and returns nothing
-typedef void (*ParseFn)();  
+typedef void (*ParseFn)(bool canAssign);  
 
 typedef struct {
     Token current;

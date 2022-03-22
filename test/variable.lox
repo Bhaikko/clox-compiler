@@ -1,4 +1,6 @@
 var beverage = "chai";
 var breakfast = "biscuts with " + beverage;
 
+breakfast = breakfast + " at 10 am";
+
 print breakfast;

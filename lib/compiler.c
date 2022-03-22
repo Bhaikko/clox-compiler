@@ -167,15 +167,23 @@ static void parsePrecedence(Precedence precedence)
         return;
     }
 
+    // Allow assignement if expression has lower precedence than assignement
+    bool canAssign = precedence <= PREC_ASSIGNMENT;
+
     // First, parsing the prefix expression
-    prefixRule();
+    prefixRule(canAssign);
 
     // Infix expressions evaluated based on Precedence
     while (precedence <= getRule(parser.current.type)->precedence) {
         advance();
 
         ParseFn infixRule = getRule(parser.previous.type)->infix;
-        infixRule();
+        infixRule(canAssign);
+    }
+
+    // Returning error if '=' was not consumed due to higher level precedence
+    if (canAssign && match(TOKEN_EQUAL)) {
+        error("Invalid assignment target.");
     }
 }
 
@@ -206,14 +214,14 @@ static void expression()
 }
 
 // Parsing number literal consisting of single token
-static void number()
+static void number(bool canAssign)
 {
     double value = strtod(parser.previous.start, NULL);
     emitConstant(NUMBER_VAL(value));
 }
 
 // Parsing grouping expressions
-static void grouping()
+static void grouping(bool canAssign)
 {
     // '(' is assumed to be consumed earlier before calling grouping()
 
@@ -222,7 +230,7 @@ static void grouping()
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static void unary()
+static void unary(bool canAssign)
 {
     TokenType operatorType = parser.previous.type;
 
@@ -241,7 +249,7 @@ static void unary()
     }
 }
 
-static void binary()
+static void binary(bool canAssign)
 {
     // The value of left operand will end up on stack
     // Get operator
@@ -316,7 +324,7 @@ static void binary()
     */
 }
 
-static void literal()
+static void literal(bool canAssign)
 {
     switch (parser.previous.type) {
         case TOKEN_FALSE: {
@@ -339,7 +347,7 @@ static void literal()
     }
 }
 
-static void string()
+static void string(bool canAssign)
 {
     // +1 and -2 trims the leading and trailing quotation marks
     emitConstant(OBJ_VAL(copyString(
@@ -348,17 +356,23 @@ static void string()
     )));
 }
 
-static void namedVariable(Token name)
+static void namedVariable(Token name, bool canAssign)
 {
     // Getting index of variable name in constant table
     uint8_t arg = identifierConstant(&name);
 
-    emitBytes(OP_GET_GLOBAL, arg);
+    // Checking if its variable assignment or lookup
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitBytes(OP_SET_GLOBAL, arg);
+    } else {
+        emitBytes(OP_GET_GLOBAL, arg);
+    }
 }
 
-static void variable() 
+static void variable(bool canAssign) 
 {
-    namedVariable(parser.previous);
+    namedVariable(parser.previous, canAssign);
 }
 
 static void printStatement()

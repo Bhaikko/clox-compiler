@@ -25,7 +25,8 @@ typedef enum {
     OP_PRINT,
     OP_POP,
     OP_DEFINE_GLOBAL,   // Defining Global Variable 
-    OP_GET_GLOBAL,      // For Reading Global 
+    OP_GET_GLOBAL,      // Reading Global from constant table
+    OP_SET_GLOBAL,      // Setting Global Variable Value
 
     // Below Instructions will be used to compile
     // <=, =>, != too, eg a != b <==> !(a == b)
