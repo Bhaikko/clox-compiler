@@ -11,6 +11,9 @@
 typedef enum {
     // 2 Byte Instruction 
     OP_CONSTANT,        // Need constant index
+    OP_DEFINE_GLOBAL,   // Defining Global Variable 
+    OP_GET_GLOBAL,      // Reading Global from constant table
+    OP_SET_GLOBAL,      // Setting Global Variable Value
 
     // 1 Byte Instuction
     OP_NEGATE,          // Negates the operand
@@ -24,9 +27,6 @@ typedef enum {
     OP_NOT,
     OP_PRINT,
     OP_POP,
-    OP_DEFINE_GLOBAL,   // Defining Global Variable 
-    OP_GET_GLOBAL,      // Reading Global from constant table
-    OP_SET_GLOBAL,      // Setting Global Variable Value
 
     // Below Instructions will be used to compile
     // <=, =>, != too, eg a != b <==> !(a == b)

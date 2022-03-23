@@ -44,6 +44,26 @@ typedef struct {
     Precedence precedence;  // precedence of an infix expression that uses that token as an operator
 } ParseRule;
 
+typedef struct {
+    Token name;
+    int depth;
+} Local;
+
+// Mainting state for Local Variables
+typedef struct {
+    // Flat array of all locals that are in scope
+    // during each point in the compilation process
+    // Since 1 byte only allows 255 values
+    // Locals array will be restricted to 255 values
+    Local locals[UINT8_COUNT];  
+
+    // Number of local variables
+    int localCount;
+
+    // 0 - Global scope, 1 - first top level block and so on
+    int scopeDepth;
+} Compiler;
+
 bool compile(const char* source, Chunk* chunk);
 
 #endif

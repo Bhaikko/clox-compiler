@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // #include "./../include/common.h"
 #include "./../include/compiler.h"
@@ -10,7 +11,35 @@
 #endif
 
 Parser parser;
+Compiler* current = NULL;
 Chunk* compilingChunk;
+
+// COMPILER OPERTATIONS
+static void initCompiler(Compiler* compiler)
+{
+    compiler->localCount = 0;
+    compiler->scopeDepth = 0;
+    current = compiler;
+}
+
+static void beginScope()
+{
+    current->scopeDepth++;
+}
+
+static void endScope()
+{
+    current->scopeDepth--;
+
+    // Removing Local variables from top of stack
+    while (
+        current->localCount > 0 &&
+        current->locals[current->localCount - 1].depth > current->scopeDepth
+    ) {
+        emitByte(OP_POP);
+        current->localCount--;
+    }
+}
 
 // PARSER UTILITIES
 static void errorAt(Token* token, const char* message)
@@ -196,15 +225,81 @@ static uint8_t identifierConstant(Token* name)
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
 }
 
+// Comparing names of two identifiers
+static bool identifierEqual(Token* a, Token* b)
+{
+    if (a->length != b->length) {
+        return false;
+    }
+
+    return memcmp(a->start, b->start, a->length) == 0;
+}
+
 static uint8_t parseVariable(const char* errorMessage)
 {
     consume(TOKEN_IDENTIFIER, errorMessage);
 
+    declareVariable();
+    if (current->scopeDepth > 0) {
+        // Returning dummy index since at runtime
+        // locals arent looked up by name
+        return 0;
+    }
+
     return identifierConstant(&parser.previous);
+}
+
+// Creates a new local and appends it to compiler's array of variable
+static void addLocal(Token name)
+{
+    // VM support 1 byte of indexing 
+    // Hence 256 local variables are supported
+    if (current->localCount == UINT8_COUNT) {
+        error("Too many local variables in function.");
+        return;
+    }
+
+    Local* local = &current->locals[current->localCount++];
+    local->name = name;
+    local->depth = current->scopeDepth;
+}
+
+static void declareVariable()
+{
+    if (current->scopeDepth == 0) {
+        // Global variables are implicitly declared
+        return;
+    }
+
+    Token* name = &parser.previous;
+
+    // Lox allows shadowing of variables 
+    // Detection of two variables having same name in same scope
+    for (int i = current->localCount - 1; i >= 0; i--) {
+        Local* local = &current->locals[i];
+
+        if (local->depth != -1 && local->depth < current->scopeDepth) {
+            break;
+        }
+
+        if (identifiersEqual(name, &local->name)) {
+            error("Already variable with this name in this scope.");
+        }
+    }
+
+
+    addLocal(*name);
 }
 
 static void defineVariable(uint8_t global)
 {
+    // If not global scope
+    // No need to create variable at runtime
+    if (current->scopeDepth > 0) {
+        // No code to create local variable at runtime
+        return;
+    }
+
     emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
@@ -395,10 +490,24 @@ static void expressionStatement()
     emitByte(OP_POP);
 }
 
+static void block()
+{
+    // Keeps parsing declarations and statements until it hits the closing brace
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        declaration();
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+}
+
 static void statement()
 {
     if (match(TOKEN_PRINT)) {
         printStatement();
+    } else if (match(TOKEN_LEFT_BRACE)) {
+        beginScope();
+        block();
+        endScope();
     } else {
         expressionStatement();
     }
@@ -523,6 +632,9 @@ static ParseRule* getRule(TokenType type)
 bool compile(const char* source, Chunk* chunk)
 {
     initScanner(source);
+
+    Compiler compiler;
+    initCompiler(&compiler);
 
     // Setting passed Chunk to currently compiled chunk
     compilingChunk = chunk;

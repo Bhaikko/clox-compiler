@@ -9,5 +9,8 @@ Operator precedence (bottom up parser) parsing is used
                 |   statement ;
                 
     statement   ->  exprStmt
-                |   printStmt ;
+                |   printStmt 
+                |   block ;
+
+    block       -> "{" declaration* "}" ;
 ```
