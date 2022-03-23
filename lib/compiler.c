@@ -249,7 +249,11 @@ static void addLocal(Token name)
 
     Local* local = &current->locals[current->localCount++];
     local->name = name;
-    local->depth = current->scopeDepth;
+
+    // Marking the variable uniniatilized but declared
+    // Declarting is when its added to scope
+    // Defining is when it becomes available for use
+    local->depth = -1;
 }
 
 static void declareVariable()
@@ -293,6 +297,11 @@ static uint8_t parseVariable(const char* errorMessage)
     return identifierConstant(&parser.previous);
 }
 
+// Chaning depth of local variable to mark it initialized
+static void markInitialized()
+{
+    current->locals[current->localCount - 1].depth = current->scopeDepth;
+}
 
 static void defineVariable(uint8_t global)
 {
@@ -300,6 +309,7 @@ static void defineVariable(uint8_t global)
     // No need to create variable at runtime
     if (current->scopeDepth > 0) {
         // No code to create local variable at runtime
+        markInitialized();
         return;
     }
 
@@ -462,6 +472,9 @@ static int resolveLocal(Compiler* compiler, Token* name)
         Local* local = &compiler->locals[i];
 
         if (identifiersEqual(name, &local->name)) {
+            if (local->depth == -1) {
+                error("Can't read local variable in its own initializer.");
+            }
             return i;
         }
     }
