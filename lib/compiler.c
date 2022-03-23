@@ -22,25 +22,6 @@ static void initCompiler(Compiler* compiler)
     current = compiler;
 }
 
-static void beginScope()
-{
-    current->scopeDepth++;
-}
-
-static void endScope()
-{
-    current->scopeDepth--;
-
-    // Removing Local variables from top of stack
-    while (
-        current->localCount > 0 &&
-        current->locals[current->localCount - 1].depth > current->scopeDepth
-    ) {
-        emitByte(OP_POP);
-        current->localCount--;
-    }
-}
-
 // PARSER UTILITIES
 static void errorAt(Token* token, const char* message)
 {
@@ -92,6 +73,7 @@ static void advance()
         errorAtCurrent(parser.current.start);
     }
 }
+
 
 // Checks current token type to passed
 // Prints error if type doesnt match
@@ -164,6 +146,26 @@ static void emitConstant(Value value)
     emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
+
+static void beginScope()
+{
+    current->scopeDepth++;
+}
+
+static void endScope()
+{
+    current->scopeDepth--;
+
+    // Removing Local variables from top of stack
+    while (
+        current->localCount > 0 &&
+        current->locals[current->localCount - 1].depth > current->scopeDepth
+    ) {
+        emitByte(OP_POP);
+        current->localCount--;
+    }
+}
+
 static void endCompiler()
 {
     // Temporary emit to print the evaluated expression
@@ -226,27 +228,13 @@ static uint8_t identifierConstant(Token* name)
 }
 
 // Comparing names of two identifiers
-static bool identifierEqual(Token* a, Token* b)
+static bool identifiersEqual(Token* a, Token* b)
 {
     if (a->length != b->length) {
         return false;
     }
 
     return memcmp(a->start, b->start, a->length) == 0;
-}
-
-static uint8_t parseVariable(const char* errorMessage)
-{
-    consume(TOKEN_IDENTIFIER, errorMessage);
-
-    declareVariable();
-    if (current->scopeDepth > 0) {
-        // Returning dummy index since at runtime
-        // locals arent looked up by name
-        return 0;
-    }
-
-    return identifierConstant(&parser.previous);
 }
 
 // Creates a new local and appends it to compiler's array of variable
@@ -290,6 +278,21 @@ static void declareVariable()
 
     addLocal(*name);
 }
+
+static uint8_t parseVariable(const char* errorMessage)
+{
+    consume(TOKEN_IDENTIFIER, errorMessage);
+
+    declareVariable();
+    if (current->scopeDepth > 0) {
+        // Returning dummy index since at runtime
+        // locals arent looked up by name
+        return 0;
+    }
+
+    return identifierConstant(&parser.previous);
+}
+
 
 static void defineVariable(uint8_t global)
 {
@@ -451,17 +454,42 @@ static void string(bool canAssign)
     )));
 }
 
+// Returns local variable index otherwise -1 for global
+static int resolveLocal(Compiler* compiler, Token* name)
+{
+    // Loops from backward because of Shadowing support for inner scope
+    for (int i = compiler->localCount - 1; i >= 0; i--) {
+        Local* local = &compiler->locals[i];
+
+        if (identifiersEqual(name, &local->name)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 static void namedVariable(Token name, bool canAssign)
 {
+    uint8_t getOp, setOp;
     // Getting index of variable name in constant table
-    uint8_t arg = identifierConstant(&name);
+    uint8_t arg = resolveLocal(current, &name);
+
+    if (arg != -1) {
+        getOp = OP_GET_LOCAL;
+        setOp = OP_SET_LOCAL;
+    } else {
+        arg = identifierConstant(&name);
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
+    }
 
     // Checking if its variable assignment or lookup
     if (canAssign && match(TOKEN_EQUAL)) {
         expression();
-        emitBytes(OP_SET_GLOBAL, arg);
+        emitBytes(setOp, (uint8_t)arg);
     } else {
-        emitBytes(OP_GET_GLOBAL, arg);
+        emitBytes(getOp, (uint8_t)arg);
     }
 }
 

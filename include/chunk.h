@@ -14,6 +14,8 @@ typedef enum {
     OP_DEFINE_GLOBAL,   // Defining Global Variable 
     OP_GET_GLOBAL,      // Reading Global from constant table
     OP_SET_GLOBAL,      // Setting Global Variable Value
+    OP_GET_LOCAL,       // Reading Local variable from constant table 
+    OP_SET_LOCAL,       // setting Local variable value
 
     // 1 Byte Instuction
     OP_NEGATE,          // Negates the operand
