@@ -486,7 +486,7 @@ static void namedVariable(Token name, bool canAssign)
 {
     uint8_t getOp, setOp;
     // Getting index of variable name in constant table
-    uint8_t arg = resolveLocal(current, &name);
+    int arg = resolveLocal(current, &name);
 
     if (arg != -1) {
         getOp = OP_GET_LOCAL;
