@@ -184,6 +184,7 @@ static void endCompiler()
 static void expression();
 static void statement();
 static void declaration();
+static void varDeclaration();
 static ParseRule* getRule(TokenType type);
 
 // Parses any expression at the given precedence level or higher
@@ -665,6 +666,69 @@ static void whileStatement()
 
 }
 
+static void forStatement()
+{
+    // Since forloop has local scope
+    beginScope();
+
+    // Consuming Mandatory punctuations for the loop
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+
+    // Initializer Clause
+    if (match(TOKEN_SEMICOLON)) {
+        // No initializer
+    } else  if (match(TOKEN_VAR)) {
+        varDeclaration();
+    } else {
+        expressionStatement();
+    }
+
+    // Offset at top of the body
+    int loopStart = currentChunk()->count;
+
+    // Condition Clause
+    int exitJump = -1;
+    if (!match(TOKEN_SEMICOLON)) {
+        expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+        // Jump out of loop if condition is false
+        exitJump = emitJump(OP_JUMP_IF_FALSE);
+
+        // Popping out evaluated condition
+        emitByte(OP_POP);
+    }
+
+    // Increment Clause
+    if (!match(TOKEN_RIGHT_PAREN)) {
+        int bodyJump = emitJump(OP_JUMP);
+        int incrementStart = currentChunk()->count;
+
+        expression();
+        emitByte(OP_POP);
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        // Since the compiler is single pass
+        // We jump over the increment, run the body, jump back up to the increment
+        // run it then go to next iteration
+        emitLoop(loopStart);
+        loopStart = incrementStart;
+        patchJump(bodyJump);
+    }
+
+    statement();
+    emitLoop(loopStart);
+
+    // Patching Jump instructiono
+    if (exitJump != -1) {
+        // Only done if there is condition clause
+        patchJump(exitJump);
+        emitByte(OP_POP);
+    }
+
+    endScope();
+}
+
 static void statement()
 {
     if (match(TOKEN_PRINT)) {
@@ -677,6 +741,8 @@ static void statement()
         ifStatement();
     } else if (match(TOKEN_WHILE)) {
         whileStatement();
+    } else if (match(TOKEN_FOR)) {
+        forStatement();
     } else {
         expressionStatement();
     }
