@@ -565,17 +565,17 @@ static void patchJump(int offset)
 
     // Following Big Endian
     // Storing Higher byte of offset in lower address
-    currentChunk()->code[offset] = (jump >> 8) && 0xff;
-    currentChunk()->code[offset + 1] = (jump) && 0xff;
+    currentChunk()->code[offset] = (jump >> 8) & 0xff;
+    currentChunk()->code[offset + 1] = (jump) & 0xff;
 }
 
 static void ifStatement()
 {
-    consume(TOKEN_LEFT_PAREN, "Expect '{' after 'if'.");
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     // Compiling condition of if statement
     // Leaves the condition at top of stack
     expression();
-    consume(TOKEN_RIGHT_PAREN, "Expect '}' after condition.");
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     int thenJump = emitJump(OP_JUMP_IF_FALSE);
     // Popping the condition evaluated by expression of If statement
