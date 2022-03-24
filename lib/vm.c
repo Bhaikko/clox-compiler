@@ -340,6 +340,14 @@ static InterpretResult run()
                     break;
                 }
 
+                case OP_LOOP: {
+                    // Unconditional Jump backwards in chunk
+                    uint16_t offset = READ_SHORT();
+                    vm.ip -= offset;
+
+                    break;
+                }
+
                 case OP_RETURN: {
                     // Exit Interpreter
                     return INTERPRET_OK;

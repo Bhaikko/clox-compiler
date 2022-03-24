@@ -344,6 +344,21 @@ static void patchJump(int offset)
     currentChunk()->code[offset + 1] = (jump) & 0xff;
 }
 
+// Emitjump and patchJump combined to configure OP_LOOP instruction
+static void emitLoop(int loopStart)
+{
+    emitByte(OP_LOOP);
+
+    int offset = currentChunk()->count - loopStart + 2;
+    if (offset > UINT16_MAX) {
+        error("Loop body too large.");
+    }
+
+    // Emiting offset bytes to Loop instruction
+    emitByte((offset >> 8) & 0xff);
+    emitByte(offset & 0xff);
+}
+
 static void expression()
 {
     parsePrecedence(PREC_ASSIGNMENT);
@@ -517,6 +532,8 @@ static void or_(bool canAssign)
 
     parsePrecedence(PREC_OR);
     patchJump(endJump);
+
+    // OR can be much more efficient than this
 }
 
 // Returns local variable index otherwise -1 for global
@@ -623,6 +640,28 @@ static void ifStatement()
 
     // Patching Else branch offset
     patchJump(elseJump);
+}
+
+static void whileStatement()
+{
+    // How far to jump back after completing an iteration of loop
+    int loopStart = currentChunk()->count;
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+    // Evaluating While loop expression
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int exitJump = emitJump(OP_JUMP_IF_FALSE);
+
+    emitByte(OP_POP);
+    // Compiling body of while loop
+    statement();
+
+    emitLoop(loopStart);
+
+    patchJump(exitJump);
+    emitByte(OP_POP);
 
 }
 
@@ -636,6 +675,8 @@ static void statement()
         endScope();
     } else if (match(TOKEN_IF)) {
         ifStatement();
+    } else if (match(TOKEN_WHILE)) {
+        whileStatement();
     } else {
         expressionStatement();
     }

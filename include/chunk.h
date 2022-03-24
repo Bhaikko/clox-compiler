@@ -18,6 +18,7 @@ typedef enum {
     OP_SET_LOCAL,       // setting Local variable value
     OP_JUMP_IF_FALSE,   // specifies offset for IP to jump by
     OP_JUMP,            // Unconditional Jump to Offset
+    OP_LOOP,
 
     // 1 Byte Instuction
     OP_NEGATE,          // Negates the operand
