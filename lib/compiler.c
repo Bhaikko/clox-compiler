@@ -541,6 +541,63 @@ static void block()
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
 
+// Emitting Jump instaruction with placeholder to chunk
+// Returns offset of emitted instruction
+static int emitJump(uint8_t instruction)
+{
+    emitByte(instruction);
+    // Emiting 2 offset placeholder bytes
+    // Will be filled after 
+    emitByte(0xff);
+    emitByte(0xff);
+
+    return currentChunk()->count - 2;
+}
+
+static void patchJump(int offset)
+{
+    // -2 to adjust for the bytecode for the jump offset itself
+    int jump = currentChunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX) {
+        error("Too much code to jump over.");
+    }
+
+    // Following Big Endian
+    // Storing Higher byte of offset in lower address
+    currentChunk()->code[offset] = (jump >> 8) && 0xff;
+    currentChunk()->code[offset + 1] = (jump) && 0xff;
+}
+
+static void ifStatement()
+{
+    consume(TOKEN_LEFT_PAREN, "Expect '{' after 'if'.");
+    // Compiling condition of if statement
+    // Leaves the condition at top of stack
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect '}' after condition.");
+
+    int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    // Popping the condition evaluated by expression of If statement
+    emitByte(OP_POP);
+    statement();
+
+    int elseJump = emitJump(OP_JUMP);
+
+    // Patching if branch offset
+    patchJump(thenJump);
+    emitByte(OP_POP);
+
+    // Handling Else Branch if found
+    if (match(TOKEN_ELSE)) {
+        statement();
+    }
+
+    // Patching Else branch offset
+    patchJump(elseJump);
+
+}
+
 static void statement()
 {
     if (match(TOKEN_PRINT)) {
@@ -549,6 +606,8 @@ static void statement()
         beginScope();
         block();
         endScope();
+    } else if (match(TOKEN_IF)) {
+        ifStatement();
     } else {
         expressionStatement();
     }

@@ -1,0 +1,9 @@
+var a = 2;
+
+if (a == 3) {
+    print "If";
+} else {
+    print "Else";
+}
+
+print "Out";

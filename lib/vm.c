@@ -119,6 +119,12 @@ static InterpretResult run()
     // Converts and returns the constant value as Object String
     #define READ_STRING() AS_STRING(READ_CONSTANT())        
 
+    // Buidling 16-bit unsigned integer from two 8-bit unsigned integer
+    // Done based on how we stored the 16 bit integer in compiler
+    // Left shifting and Or to combine bits
+    #define READ_SHORT() \
+        (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
+
     // This do block ensures a local scope for macro 
     // Does type checking with performing binary oepration stack
     #define BINARY_OP(valueType, op) \
@@ -316,6 +322,24 @@ static InterpretResult run()
                     break;
                 }
 
+                case OP_JUMP_IF_FALSE: {
+                    // Reading 2 Bytes of Offset
+                    uint16_t offset = READ_SHORT();
+
+                    // Checking condition to manipulate instruction pointer
+                    if (isFalsey(peek(0))) {
+                        vm.ip += offset;
+                    }
+                    break;
+                }
+
+                case OP_JUMP: {
+                    uint16_t offset = READ_SHORT();
+                    vm.ip += offset;
+
+                    break;
+                }
+
                 case OP_RETURN: {
                     // Exit Interpreter
                     return INTERPRET_OK;
@@ -324,6 +348,7 @@ static InterpretResult run()
         }
 
     #undef READ_BYTE
+    #undef READ_SHORT
     #undef READ_CONSTANT
     #undef READ_STRING
     #undef BINARY_OP
