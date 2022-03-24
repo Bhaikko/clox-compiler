@@ -7,3 +7,27 @@ if (a == 3) {
 }
 
 print "Out";
+
+var a = true;
+print a;
+
+if (a == "false") {
+    print "If";
+} else {
+    print "else";
+}
+
+
+
+print "hi" or 2;
+print nil or "yes";
+
+print true and false;
+print false and true;
+print false and false;
+print true and true;
+
+print true or false;
+print false or true;
+print false or false;
+print true or true;

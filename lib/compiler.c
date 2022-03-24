@@ -316,6 +316,34 @@ static void defineVariable(uint8_t global)
     emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
+// Emitting Jump instaruction with placeholder to chunk
+// Returns offset of emitted instruction
+static int emitJump(uint8_t instruction)
+{
+    emitByte(instruction);
+    // Emiting 2 offset placeholder bytes
+    // Will be filled after 
+    emitByte(0xff);
+    emitByte(0xff);
+
+    return currentChunk()->count - 2;
+}
+
+static void patchJump(int offset)
+{
+    // -2 to adjust for the bytecode for the jump offset itself
+    int jump = currentChunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX) {
+        error("Too much code to jump over.");
+    }
+
+    // Following Big Endian
+    // Storing Higher byte of offset in lower address
+    currentChunk()->code[offset] = (jump >> 8) & 0xff;
+    currentChunk()->code[offset + 1] = (jump) & 0xff;
+}
+
 static void expression()
 {
     parsePrecedence(PREC_ASSIGNMENT);
@@ -464,6 +492,33 @@ static void string(bool canAssign)
     )));
 }
 
+// Compiles and keyword
+static void and_(bool canAssign)
+{
+    // Since logical operators support short circuting
+    // Need to use jumps
+    int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+    emitByte(OP_POP);
+    parsePrecedence(PREC_AND);
+
+    patchJump(endJump);
+}
+
+// Compiles or keyword
+static void or_(bool canAssign)
+{
+    // Also supports short circuiting
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    int endJump = emitJump(OP_JUMP);
+
+    patchJump(elseJump);
+    emitByte(OP_POP);
+
+    parsePrecedence(PREC_OR);
+    patchJump(endJump);
+}
+
 // Returns local variable index otherwise -1 for global
 static int resolveLocal(Compiler* compiler, Token* name)
 {
@@ -541,33 +596,6 @@ static void block()
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
 
-// Emitting Jump instaruction with placeholder to chunk
-// Returns offset of emitted instruction
-static int emitJump(uint8_t instruction)
-{
-    emitByte(instruction);
-    // Emiting 2 offset placeholder bytes
-    // Will be filled after 
-    emitByte(0xff);
-    emitByte(0xff);
-
-    return currentChunk()->count - 2;
-}
-
-static void patchJump(int offset)
-{
-    // -2 to adjust for the bytecode for the jump offset itself
-    int jump = currentChunk()->count - offset - 2;
-
-    if (jump > UINT16_MAX) {
-        error("Too much code to jump over.");
-    }
-
-    // Following Big Endian
-    // Storing Higher byte of offset in lower address
-    currentChunk()->code[offset] = (jump >> 8) & 0xff;
-    currentChunk()->code[offset + 1] = (jump) & 0xff;
-}
 
 static void ifStatement()
 {
@@ -703,7 +731,7 @@ ParseRule rules[] = {
     [TOKEN_IDENTIFIER]      = { variable,   NULL,      PREC_NONE    },
     [TOKEN_STRING]          = { string,     NULL,      PREC_NONE    },
     [TOKEN_NUMBER]          = { number,     NULL,      PREC_NONE    },
-    [TOKEN_AND]             = { NULL,       NULL,      PREC_NONE    },
+    [TOKEN_AND]             = { NULL,       and_,      PREC_AND     },
     [TOKEN_CLASS]           = { NULL,       NULL,      PREC_NONE    },
     [TOKEN_ELSE]            = { NULL,       NULL,      PREC_NONE    },
     [TOKEN_FALSE]           = { literal,    NULL,      PREC_NONE    },
@@ -711,7 +739,7 @@ ParseRule rules[] = {
     [TOKEN_FUN]             = { NULL,       NULL,      PREC_NONE    },
     [TOKEN_IF]              = { NULL,       NULL,      PREC_NONE    },
     [TOKEN_NIL]             = { literal,    NULL,      PREC_NONE    },
-    [TOKEN_OR]              = { NULL,       NULL,      PREC_NONE    },
+    [TOKEN_OR]              = { NULL,       or_,       PREC_OR    },
     [TOKEN_PRINT]           = { NULL,       NULL,      PREC_NONE    },
     [TOKEN_RETURN]          = { NULL,       NULL,      PREC_NONE    },
     [TOKEN_SUPER]           = { NULL,       NULL,      PREC_NONE    },
