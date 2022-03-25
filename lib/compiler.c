@@ -17,6 +17,8 @@ Chunk* compilingChunk;
 // COMPILER OPERTATIONS
 static void initCompiler(Compiler* compiler, FunctionType type)
 {
+    compiler->enclosing = current;
+
     // Creating function at compile time for top level execution
     compiler->function = NULL;
     compiler->type = type;
@@ -27,6 +29,16 @@ static void initCompiler(Compiler* compiler, FunctionType type)
     compiler->function = newFunction();
 
     current = compiler;
+
+    if (type != TYPE_SCRIPT) {
+        // Setting function name from previous token
+        // We copy string because the source code string will get freed after compiling
+        // But we need the string name in runtime to reference
+        current->function->name = copyString(
+            parser.previous.start,
+            parser.previous.length
+        );
+    }
 
     // Defining stack slot zero for VM's own internal use
     Local* local = &current->locals[current->localCount++];
@@ -197,6 +209,7 @@ static ObjFunction* endCompiler()
     }
 #endif
 
+    current = current->enclosing;
     return function;
 }
 
@@ -320,9 +333,14 @@ static uint8_t parseVariable(const char* errorMessage)
     return identifierConstant(&parser.previous);
 }
 
-// Chaning depth of local variable to mark it initialized
+// Changing depth of local variable to mark it initialized
 static void markInitialized()
 {
+    // Bound to be globalVariable
+    if (current->scopeDepth == 0) {
+        return;
+    }
+
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
@@ -790,6 +808,49 @@ static void varDeclaration()
     defineVariable(global);
 }
 
+// Compiling function 
+static void function(FunctionType type)
+{
+    // Defining seperate compiler for each function being compiled
+    Compiler compiler;
+    initCompiler(&compiler, type);
+
+    // Defining scope for current function body
+    beginScope();
+
+    // Compiling Parameter list
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            current->function->arity++;
+            if (current->function->arity > 255) {
+                errorAtCurrent("Can't have more than 255 parameters.");
+            }
+
+            uint8_t paramConstant = parseVariable(
+                "Expect parameter name."
+            );
+
+            // Only defining arguements and not initialising
+            defineVariable(paramConstant);
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameter.");
+
+    // Compiling Body
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+    block();
+
+    // Creating function object
+    // endCompiler also sets the current compiler object to enclosing
+    // Hence the bytes are emitted to the parent compiler's chunk
+    ObjFunction* function = endCompiler();
+
+    // Storing function object in constant table
+    emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
+
+}
+
 static void synchronize()
 {
     parser.panicMode = false;
@@ -822,9 +883,23 @@ static void synchronize()
     }
 }
 
+static void funDeclaration()
+{
+    // Compiling Variable name of function
+    uint8_t global = parseVariable("Expect function name.");
+    // Its safe for function to reder to its own name inside its body
+    markInitialized();
+
+    function(TYPE_FUNCTION);
+
+    defineVariable(global);
+}
+
 static void declaration()
 {
-    if (match(TOKEN_VAR)) {
+    if (match(TOKEN_FUN)) {
+        funDeclaration();
+    } else if (match(TOKEN_VAR)) {
         varDeclaration();
     } else {
         statement();

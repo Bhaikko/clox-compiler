@@ -1,0 +1,6 @@
+fun hellWorld()
+{
+    print "Hello World";
+}
+
+print hellWorld;

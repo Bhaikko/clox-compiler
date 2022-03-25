@@ -56,7 +56,10 @@ typedef enum {
 } FunctionType;
 
 // Mainting state for Local Variables
-typedef struct {
+typedef struct Compiler {
+    // Maining Linked List for enclosing Compiler
+    struct Compiler* enclosing;
+
     // Wrapping the top level program into a function
     ObjFunction* function;
     FunctionType type;
