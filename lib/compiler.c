@@ -15,11 +15,24 @@ Compiler* current = NULL;
 Chunk* compilingChunk;
 
 // COMPILER OPERTATIONS
-static void initCompiler(Compiler* compiler)
+static void initCompiler(Compiler* compiler, FunctionType type)
 {
+    // Creating function at compile time for top level execution
+    compiler->function = NULL;
+    compiler->type = type;
+
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
+
+    compiler->function = newFunction();
+
     current = compiler;
+
+    // Defining stack slot zero for VM's own internal use
+    Local* local = &current->locals[current->localCount++];
+    local->depth = 0;
+    local->name.start = "";
+    local->name.length = 0;
 }
 
 // PARSER UTILITIES
@@ -107,7 +120,9 @@ static bool match(TokenType type)
 // CODE GENERATION FUNCTIONS
 static Chunk* currentChunk()
 {
-    return compilingChunk;
+    // current chunk is always the chunk owned by the function 
+    // we're in middle of compiling
+    return &current->function->chunk;
 }
 
 // Writes the given byte to chunk
@@ -166,16 +181,23 @@ static void endScope()
     }
 }
 
-static void endCompiler()
+static ObjFunction* endCompiler()
 {
     // Temporary emit to print the evaluated expression
     emitReturn();
 
+    ObjFunction* function = current->function;
+
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
-        disassembleChunk(currentChunk(), "code");
+        // Handling Implicit function since it does not have name
+        disassembleChunk(currentChunk(), 
+            function->name != NULL ? function->name->chars : "<script>"
+        );
     }
 #endif
+
+    return function;
 }
 
 // PARSING FUNCTIONS
@@ -864,12 +886,12 @@ static ParseRule* getRule(TokenType type)
     return &rules[type];
 }
 
-bool compile(const char* source, Chunk* chunk)
+ObjFunction* compile(const char* source, Chunk* chunk)
 {
     initScanner(source);
 
     Compiler compiler;
-    initCompiler(&compiler);
+    initCompiler(&compiler, TYPE_SCRIPT);
 
     // Setting passed Chunk to currently compiled chunk
     compilingChunk = chunk;
@@ -884,6 +906,7 @@ bool compile(const char* source, Chunk* chunk)
         declaration();
     }
 
-    endCompiler();
-    return !parser.hadError;
+    // If there is error in compiler, we return NULL
+    ObjFunction* function = endCompiler();
+    return parser.hadError ? NULL : function;
 }

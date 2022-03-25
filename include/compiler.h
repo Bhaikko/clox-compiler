@@ -49,8 +49,18 @@ typedef struct {
     int depth;
 } Local;
 
+// Distinction for which type of function is being executed
+typedef enum {
+    TYPE_FUNCTION,  // Function body
+    TYPE_SCRIPT     // Top level code
+} FunctionType;
+
 // Mainting state for Local Variables
 typedef struct {
+    // Wrapping the top level program into a function
+    ObjFunction* function;
+    FunctionType type;
+
     // Flat array of all locals that are in scope
     // during each point in the compilation process
     // Since 1 byte only allows 255 values
@@ -64,6 +74,6 @@ typedef struct {
     int scopeDepth;
 } Compiler;
 
-bool compile(const char* source, Chunk* chunk);
+ObjFunction* compile(const char* source, Chunk* chunk);
 
 #endif
