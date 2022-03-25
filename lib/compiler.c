@@ -886,15 +886,12 @@ static ParseRule* getRule(TokenType type)
     return &rules[type];
 }
 
-ObjFunction* compile(const char* source, Chunk* chunk)
+ObjFunction* compile(const char* source)
 {
     initScanner(source);
 
     Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT);
-
-    // Setting passed Chunk to currently compiled chunk
-    compilingChunk = chunk;
 
     parser.hadError = false;
     parser.panicMode = false;

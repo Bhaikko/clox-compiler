@@ -8,14 +8,29 @@
 #include "chunk.h"
 #include "value.h"
 #include "table.h"
+#include "object.h"
 
-#define STACK_MAX 256
+#define FRAMES_MAX 64
+#define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
+
+// Represents a single ongoing function call
+// Will be instantiated each time a function is called
+typedef struct {
+    ObjFunction* function;
+
+    // instruction pointer, pointing to next instruction in bytecode to be executed
+    // Caller stores its own IP
+    uint8_t* ip;
+
+    // points into VM's value stack at the first slot that this function use
+    Value* slots;           
+} CallFrame;
 
 typedef struct {
-    Chunk* chunk;
-    
-    // instruction pointer, pointing to next instruction in bytecode to be executed
-    uint8_t* ip;    
+    // Defining Call stack for VM
+    CallFrame frames[FRAMES_MAX];
+    // Storing Call Stack Depth
+    int frameCount; 
 
     // Stack of operands, acts like a shared workspace for instructions
     Value stack[STACK_MAX];

@@ -74,6 +74,6 @@ typedef struct {
     int scopeDepth;
 } Compiler;
 
-ObjFunction* compile(const char* source, Chunk* chunk);
+ObjFunction* compile(const char* source);
 
 #endif
