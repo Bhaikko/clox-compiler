@@ -791,6 +791,23 @@ static void forStatement()
     endScope();
 }
 
+static void returnStatement()
+{
+    if (current->type == TYPE_SCRIPT) {
+        error("Can't return from top-level code.");
+    }
+
+    if (match(TOKEN_SEMICOLON)) {
+        emitReturn();
+    } else {
+        // Calculating return expression 
+        // which will push the result on top of stack
+        expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+        emitByte(OP_RETURN);
+    }
+}
+
 static void statement()
 {
     if (match(TOKEN_PRINT)) {
@@ -805,6 +822,8 @@ static void statement()
         whileStatement();
     } else if (match(TOKEN_FOR)) {
         forStatement();
+    } else if (match(TOKEN_RETURN)) {
+        returnStatement();
     } else {
         expressionStatement();
     }

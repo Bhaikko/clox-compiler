@@ -434,6 +434,8 @@ static InterpretResult run()
 
                     // Discarding all the slots function was using
                     vm.stackTop = frame->slots;
+
+                    // Pushing the returned result at top of stack
                     push(result);
 
                     frame = &vm.frames[vm.frameCount - 1];
