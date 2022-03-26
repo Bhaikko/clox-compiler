@@ -4,3 +4,5 @@
 * Better encoding of line for bytecode
 * Add support for switch statement
 * Add support for continue
+* Add runtime checking for native function
+* Add input support to clox using native function
