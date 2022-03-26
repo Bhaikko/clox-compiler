@@ -595,6 +595,26 @@ static int resolveLocal(Compiler* compiler, Token* name)
     return -1;
 }
 
+// Compiling arguements list for function call
+static uint8_t arguementList()
+{
+    uint8_t argCount = 0;
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            expression();
+
+            if (argCount == 255) {
+                error("Can't have more than 255 arguements.");
+            }
+
+            argCount++;
+        } while (match(TOKEN_COMMA));
+    }
+
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguements.");
+    return argCount;
+}
+
 static void namedVariable(Token name, bool canAssign)
 {
     uint8_t getOp, setOp;
@@ -910,10 +930,16 @@ static void declaration()
     }
 }
 
+static void call(bool canAssign)
+{
+    uint8_t argCount = arguementList();
+    emitBytes(OP_CALL, argCount);
+}
+
 // Parse Rules for the compiler
 ParseRule rules[] = {
     // Token Type               Prefix      Infix       Precedence       
-    [TOKEN_LEFT_PAREN]      = { grouping,   NULL,      PREC_NONE    },
+    [TOKEN_LEFT_PAREN]      = { grouping,   call,      PREC_CALL    },
     [TOKEN_RIGHT_PAREN]     = { NULL,       NULL,      PREC_NONE    }, 
     [TOKEN_LEFT_BRACE]      = { NULL,       NULL,      PREC_NONE    }, 
     [TOKEN_RIGHT_BRACE]     = { NULL,       NULL,      PREC_NONE    }, 

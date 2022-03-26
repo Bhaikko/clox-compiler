@@ -3,4 +3,4 @@ fun hellWorld()
     print "Hello World";
 }
 
-print hellWorld;
+print hellWorld();

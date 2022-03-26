@@ -19,6 +19,7 @@ typedef enum {
     OP_JUMP_IF_FALSE,   // specifies offset for IP to jump by
     OP_JUMP,            // Unconditional Jump to Offset
     OP_LOOP,
+    OP_CALL,
 
     // 1 Byte Instuction
     OP_NEGATE,          // Negates the operand

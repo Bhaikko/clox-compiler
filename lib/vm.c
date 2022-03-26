@@ -97,6 +97,34 @@ static bool isFalsey(Value value)
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
+// Setting up VM state according to function call
+static bool call(ObjFunction* function, int argCount)
+{
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->function = function;
+    frame->ip = function->chunk.code;
+
+    frame->slots = vm.stackTop - argCount - 1;
+    return true;
+}
+
+static bool callValue(Value callee, int argCount)
+{
+    if (IS_OBJ(callee)) {
+        switch (OBJ_TYPE(callee)) {
+            case OBJ_FUNCTION: 
+                return call(AS_FUNCTION(callee), argCount);
+
+            default:
+                // Non callable object
+                break;
+        }
+    }
+
+    runtimeError("Can only call functions and classes.");
+    return false;
+}
+
 // Concatenating two strings on top of stack
 static void concatenate()
 {
@@ -360,6 +388,20 @@ static InterpretResult run()
                     break;
                 }
 
+                case OP_CALL: {
+                    int argCount = READ_BYTE();
+
+                    // Calling function
+                    if (!callValue(peek(argCount), argCount)) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
+                    // CallFrame for the called function
+                    frame = &vm.frames[vm.frameCount - 1];
+
+                    break;
+                }
+
                 case OP_RETURN: {
                     // Exit Interpreter
                     return INTERPRET_OK;
@@ -382,12 +424,9 @@ InterpretResult interpret(const char* source)
     }
 
     push(OBJ_VAL(function));
-    CallFrame* frame = &vm.frames[vm.frameCount++];
-
-    // Setting up implicit Function
-    frame->function = function;
-    frame->ip = function->chunk.code;
-    frame->slots = vm.stack;
+    
+    // Setting up first frame for executing top level code
+    callValue(OBJ_VAL(function), 0);
 
     return run();
 }
