@@ -70,8 +70,6 @@ void freeObjects()
 // format allows to pass format string like in printf()
 static void runtimeError(const char* format, ...)
 {
-    // Full stack trace will be added later
-
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
@@ -79,12 +77,21 @@ static void runtimeError(const char* format, ...)
 
     fputs("\n", stderr);
 
-    // Getting current instruction index from Instruction pointer
-    CallFrame* frame = &vm.frames[vm.frameCount - 1];
-    size_t instruction = frame->ip - frame->function->chunk.code - 1;
-    int line = frame->function->chunk.lines[instruction];
+    // Printing stack trace
+    for (int i = vm.frameCount - 1; i >= 0; i--) {
+        CallFrame* frame = &vm.frames[i];
+        ObjFunction* function = frame->function;
 
-    fprintf(stderr, "[line %d] in script\n", line);
+        size_t instruction = frame->ip - function->chunk.code - 1;
+
+        fprintf(stderr, "[line %d] in ", function->chunk.lines[instruction]);
+
+        if (function->name == NULL) {
+            fprintf(stderr, "script\n");
+        } else {
+            fprintf(stderr, "%s()\n", function->name->chars);
+        }
+    }
 
     resetStack();
 
@@ -100,6 +107,18 @@ static bool isFalsey(Value value)
 // Setting up VM state according to function call
 static bool call(ObjFunction* function, int argCount)
 {
+    // Runtime check for arguements passed
+    if (argCount != function->arity) {
+        runtimeError("Expected %d arguements but got %d.", function->arity, argCount);
+        return false;
+    }
+
+    // Check for stack overflow
+    if (vm.frameCount == FRAMES_MAX) {
+        runtimeError("Stack overflow.");
+        return false;
+    }
+
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->function = function;
     frame->ip = function->chunk.code;
