@@ -422,8 +422,22 @@ static InterpretResult run()
                 }
 
                 case OP_RETURN: {
-                    // Exit Interpreter
-                    return INTERPRET_OK;
+                    Value result = pop();
+
+                    vm.frameCount--;
+
+                    // Exiting from top level function in script
+                    if (vm.frameCount == 0) {
+                        pop();
+                        return INTERPRET_OK;
+                    }
+
+                    // Discarding all the slots function was using
+                    vm.stackTop = frame->slots;
+                    push(result);
+
+                    frame = &vm.frames[vm.frameCount - 1];
+                    break;
                 }
             }
         }
