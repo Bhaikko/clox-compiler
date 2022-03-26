@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
 
 #include "./../include/compiler.h"
 #include "./../include/debug.h"
@@ -10,6 +11,15 @@
 // Since the VM object will be passed as arguement to all function
 // We maintain a global VM object
 VM vm;
+
+// NATIVE FUNCTIONS
+static Value clockNative(int argCount, Value* args)
+{
+    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+}
+
+// VM FUNCTIONS
+static void defineNative(const char* name, NativeFn function);
 
 static void resetStack()
 {
@@ -23,6 +33,8 @@ void initVM()
     vm.objects = NULL;
     initTable(&vm.strings);
     initTable(&vm.globals);
+
+    defineNative("clock", clockNative);
 }
 
 void freeVM()
@@ -51,6 +63,14 @@ static void freeObject(Obj* object)
             FREE(ObjFunction, object);
             break;
         }
+
+        case OBJ_NATIVE: {
+            FREE(ObjNative, object);
+            break;
+        }
+
+        default:
+            break;
     }
 }
 
@@ -97,6 +117,21 @@ static void runtimeError(const char* format, ...)
 
 }
 
+// Interface to define Native function in Lox
+static void defineNative(const char* name, NativeFn function)
+{
+    // Push and pop because of garbage collector to not to free the string memory
+
+    // Mapping Native function with a string keyword in globals table
+    push(OBJ_VAL(copyString(name, (int)strlen(name))));
+    push(OBJ_VAL(newNative(function)));
+
+    tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+
+    pop();
+    pop();
+}
+
 // Lox follows Ruby such that nil and false are falsey
 // Every other value behaves like true
 static bool isFalsey(Value value)
@@ -134,8 +169,16 @@ static bool callValue(Value callee, int argCount)
             case OBJ_FUNCTION: 
                 return call(AS_FUNCTION(callee), argCount);
 
+            case OBJ_NATIVE: {
+                // Call The C function and push the result onto stack
+                NativeFn native = AS_NATIVE(callee);
+                Value result = native(argCount, vm.stackTop - argCount);
+                vm.stackTop -= argCount + 1;
+                push(result);
+                return true;
+            }
+
             default:
-                // Non callable object
                 break;
         }
     }

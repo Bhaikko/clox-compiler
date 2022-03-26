@@ -8,10 +8,13 @@
 #define OBJ_TYPE(value)         (AS_OBJ(value)->type)
 #define IS_STRING(value)        isObjType(value, OBJ_STRING)
 #define IS_FUNCTION(value)      isObjType(value, OBJ_FUNCTION)
+#define IS_NATIVE(value)        isObjType(value, OBJ_NATIVE)
 
 // Expands a valid ObjString pointer on heap
 #define AS_STRING(value)        ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)       (((ObjString*)AS_OBJ(value))->chars)
+#define AS_NATIVE(value) \
+        (((ObjNative*)AS_OBJ(value))->function)
 
 // Expands a valid ObjFunction pointer on heap
 #define AS_FUNCTION(value)      ((ObjFunction*)AS_OBJ(value))
@@ -19,7 +22,8 @@
 // Object Types for Obj
 typedef enum {
     OBJ_STRING,
-    OBJ_FUNCTION
+    OBJ_FUNCTION,
+    OBJ_NATIVE
 } ObjType;
 
 /*
@@ -56,6 +60,17 @@ typedef struct {
     ObjString* name;    // name of function identifier
 } ObjFunction;
 
+// Native Function representation
+typedef Value (*NativeFn)(int argCount, Value* args);
+
+// Representing Native Function in Clox
+typedef struct {
+    Obj obj;
+
+    // Pointer to C function function that implements the native behavior
+    NativeFn function;  
+} ObjNative;
+
 ObjString* takeString(char* chars, int length);
 
 // Making copy of string literal from source code
@@ -72,5 +87,8 @@ static inline bool isObjType(Value value, ObjType type)
 // ObjFunction utilities
 // Defining New function object
 ObjFunction* newFunction();
+
+// Defining new Native function object
+ObjNative* newNative(NativeFn function);
 
 #endif
