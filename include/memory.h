@@ -48,4 +48,13 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize);
 // For freeing unused memory
 void collectGarbage();
 
+// Marking current object being referred
+void markObject(Obj* object);
+
+// Marking value which are referred
+void markValue(Value value);
+
+// Marking global variables stored in table
+void markTable(Table* table);
+
 #endif

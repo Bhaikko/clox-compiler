@@ -3,8 +3,9 @@
 #include <string.h>
 
 // #include "./../include/common.h"
-#include "./../include/compiler.h"
 // #include "./../include/scanner.h"
+#include "./../include/memory.h"
+#include "./../include/compiler.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "./../include/debug.h"
@@ -1028,4 +1029,15 @@ ObjFunction* compile(const char* source)
     // If there is error in compiler, we return NULL
     ObjFunction* function = endCompiler();
     return parser.hadError ? NULL : function;
+}
+
+void markCompilerRoots()
+{
+    Compiler* compiler = current;
+
+    // Marking Function objects for garbage collector by walking whole list
+    while (compiler != NULL) {
+        markObject((Obj*)compiler->function);
+        compiler = compiler->enclosing;
+    }
 }

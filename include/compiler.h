@@ -79,4 +79,7 @@ typedef struct Compiler {
 
 ObjFunction* compile(const char* source);
 
+// For Garbage Collector to marks roots to compiler referenced memory
+void markCompilerRoots();
+
 #endif
