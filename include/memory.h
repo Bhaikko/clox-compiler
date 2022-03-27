@@ -45,4 +45,7 @@
  */
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
 
+// For freeing unused memory
+void collectGarbage();
+
 #endif
