@@ -51,6 +51,10 @@ typedef struct {
     int grayCount;
     int grayCapacity;
     Obj** grayStack;
+
+    // State for tracking live memory
+    size_t bytesAllocated;
+    size_t nextGC;          // Threshold that triggers next collection
 } VM;
 
 // For interpreter to set the exit code of the process
