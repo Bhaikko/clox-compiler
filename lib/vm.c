@@ -31,6 +31,11 @@ void initVM()
 {
     resetStack();
     vm.objects = NULL;
+
+    vm.grayCount = 0;
+    vm.grayCapacity = 0;
+    vm.grayStack = NULL;
+
     initTable(&vm.strings);
     initTable(&vm.globals);
 
@@ -87,6 +92,8 @@ void freeObjects()
         freeObject(object);
         object = next;
     }
+
+    free(vm.grayStack);
 }
 
 // Shows runtime errors thrown by VM

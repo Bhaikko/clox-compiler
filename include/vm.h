@@ -45,6 +45,12 @@ typedef struct {
     
     // for string interning
     Table strings;
+
+    // Memory of Garbage Collector is not managed by Garbage collector
+    // Maintaining Gray stack
+    int grayCount;
+    int grayCapacity;
+    Obj** grayStack;
 } VM;
 
 // For interpreter to set the exit code of the process

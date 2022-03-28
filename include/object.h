@@ -37,6 +37,7 @@ typedef enum {
 struct Obj {
     ObjType type;
     bool isMarked;      // used by Garbage Collector for marking for being referenced
+    
     // For Linked List node reference
     // Will be used by Garbage Collector
     struct Obj* next;
