@@ -109,6 +109,35 @@ static void blackenObject(Obj* object)
     }
 }
 
+// Freeing all white marked objects
+static void sweep()
+{
+    Obj* previous = NULL;
+    Obj* object = vm.objects;
+
+    while (object != NULL) {
+        if (object->isMarked) {
+            object->isMarked = false;
+            previous = object;
+            object = object->next;
+        } else {
+            // If object is unmarked
+            // Unliknk from Linked list and Free it
+            Obj* unreached = object;
+
+            object = object->next;
+
+            if (previous != NULL) {
+                previous->next = object;
+            } else {
+                vm.objects = object;
+            }
+
+            freeObject(unreached);
+        }
+    }
+}
+
 // Traversing through the references of gray object then marking them Black
 static void traceReferences()
 {
@@ -119,6 +148,9 @@ static void traceReferences()
         // and is no longer in gray stack
         blackenObject(object);
     }
+
+    // Every object in the heap is now either black or white
+    sweep();
 }
 
 // Garbage collecting memory based on Mark Sweep Garbage Collection
