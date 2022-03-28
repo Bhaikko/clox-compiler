@@ -49,9 +49,15 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash)
     string->chars = chars;
     string->hash = hash;
 
+    // Temporarily pushing string to stack
+    // to prevent the bug of resizing and calling GC at same time
+    push(OBJ_VAL(string));
+
     // Whenever we create a new unique string, 
     // we add it to VM string interning table
     tableSet(&vm.strings, string, NIL_VAL);
+
+    pop();
     
 
     return string;

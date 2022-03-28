@@ -206,8 +206,8 @@ static bool callValue(Value callee, int argCount)
 // Concatenating two strings on top of stack
 static void concatenate()
 {
-    ObjString* b = AS_STRING(pop());
-    ObjString* a = AS_STRING(pop());
+    ObjString* b = AS_STRING(peek(0));
+    ObjString* a = AS_STRING(peek(1));
 
     int length = a->length + b->length;
     char* chars = ALLOCATE(char, length + 1);
@@ -220,6 +220,8 @@ static void concatenate()
     // Since ALLOCATE was called above to allocate memory to concatenated string
     // No need to copy string to new memory
     ObjString* result = takeString(chars, length);
+    pop();
+    pop();
     push(OBJ_VAL(result));
 
 }
