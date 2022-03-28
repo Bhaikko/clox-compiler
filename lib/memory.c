@@ -6,7 +6,7 @@
 
 #ifdef DEBUG_LOG_GC
     #include <stdio.h>
-    #include "debug.h"
+    #include "./../include/debug.h"
 #endif
 
 void markTable(Table* table)
@@ -43,7 +43,7 @@ void markObject(Obj* object)
     // storing all reachable objects as Gray to traverse them later
     if (vm.grayCapacity < vm.grayCount + 1) {
         vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
-        vm.grayStack = realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
+        vm.grayStack = (Obj**)realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
 
         if (vm.grayStack == NULL) {
             exit(1);
@@ -90,7 +90,7 @@ static void markArray(ValueArray* array)
 static void blackenObject(Obj* object)
 {
 #ifdef DEBUG_LOG_GC
-    printf("%p blacken", (void*)object);
+    printf("%p blacken ", (void*)object);
     printValue(OBJ_VAL(object));
     printf("\n");
 #endif
@@ -150,7 +150,6 @@ static void traceReferences()
     }
 
     // Every object in the heap is now either black or white
-    sweep();
 }
 
 // Garbage collecting memory based on Mark Sweep Garbage Collection
@@ -162,6 +161,12 @@ void collectGarbage()
 
     markRoots();
     traceReferences();
+
+    // Strings are special case since interning of strings was implemented
+    // Removing Dangling pointers from table of ObjString freed by Garbage Collectors
+    tableRemoveWhite(&vm.strings);
+
+    sweep();
 
 #ifdef DEBUG_LOG_GC
     printf("--gc end\n");

@@ -79,7 +79,10 @@ Value pop();
 // distance = 0 is top
 Value peek(int distance);
 
+void freeObject(Obj* object);
+
 // To free all heap allocated objects
 void freeObjects();
+
 
 #endif

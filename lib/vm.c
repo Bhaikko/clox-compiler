@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "./../include/compiler.h"
@@ -52,7 +53,7 @@ void freeVM()
 }
 
 // Freeing Type specifc object memory
-static void freeObject(Obj* object)
+void freeObject(Obj* object)
 {
 #ifdef DEBUG_LOG_GC
     printf("%p free type %d\n", (void*)object, object->type);
