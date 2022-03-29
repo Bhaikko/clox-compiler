@@ -9,13 +9,13 @@
 void initTable(Table* table)
 {
     table->count = 0;
-    table->capacity = 0;
+    table->capacity = -1;
     table->entries = NULL;
 }
 
 void freeTable(Table* table)
 {
-    FREE_ARRAY(Entry, table->entries, table->capacity);
+    FREE_ARRAY(Entry, table->entries, table->capacity + 1);
     initTable(table);
 }
 
@@ -24,7 +24,10 @@ void freeTable(Table* table)
 // to decide where to insert new ones
 static Entry* findEntry(Entry* entries, int capacity, ObjString* key)
 {
-    uint32_t index = key->hash % capacity;
+    // uint32_t index = key->hash % capacity;
+
+    // Optimisation for MOD operator if power of 2 MOD is done
+    uint32_t index = key->hash & capacity;
     Entry* tombstone = NULL;
 
     // Searching based on Linear probing 
@@ -46,15 +49,15 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key)
             return entry;
         }
 
-        index = (index + 1) % capacity;
+        index = (index + 1) & capacity;
     }
 }
 
 // Allocating Array of buckets
 static void adjustCapacity(Table* table, int capacity)
 {
-    Entry* entries = ALLOCATE(Entry, capacity);
-    for (int i = 0; i < capacity; i++) {
+    Entry* entries = ALLOCATE(Entry, capacity + 1);
+    for (int i = 0; i <= capacity; i++) {
         entries[i].key = NULL;
         entries[i].value = NIL_VAL;
     }
@@ -62,7 +65,7 @@ static void adjustCapacity(Table* table, int capacity)
     // Adjusting Capacity will affect capacity which is used as MOD for index
     // SO need to rebuild hash table too when adjusting capacity
     table->count = 0;
-    for (int i = 0; i < table->capacity; i++) {
+    for (int i = 0; i <= table->capacity; i++) {
         Entry* entry = &table->entries[i];
         if (entry->key == NULL) {
             continue;
@@ -78,19 +81,18 @@ static void adjustCapacity(Table* table, int capacity)
     }
 
     // Freeing old Entry table
-    FREE_ARRAY(Entry, table->entries, table->capacity);
+    FREE_ARRAY(Entry, table->entries, table->capacity + 1);
 
     table->entries = entries;
     table->capacity = capacity;
 
 }
 
-
 bool tableSet(Table* table, ObjString* key, Value value)
 {
     // Allocating and growing entry array
-    if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
-        int capacity = GROW_CAPACITY(table->capacity);
+    if (table->count + 1 > (table->capacity + 1) * TABLE_MAX_LOAD) {
+        int capacity = GROW_CAPACITY(table->capacity + 1) - 1;
         adjustCapacity(table, capacity);
     }
 
@@ -110,7 +112,7 @@ bool tableSet(Table* table, ObjString* key, Value value)
 
 void tableAddAll(Table* from, Table* to)
 {
-    for (int i = 0; i < from->capacity; i++) {
+    for (int i = 0; i <= from->capacity; i++) {
         Entry* entry = &from->entries[i];
         if (entry->key != NULL) {
             tableSet(to, entry->key, entry->value);
@@ -160,7 +162,7 @@ ObjString* tableFindString(Table* table, const char* chars, int length, uint32_t
         return NULL;
     }
 
-    uint32_t index = hash % table->capacity;
+    uint32_t index = hash & table->capacity;
 
     for (;;) {
         Entry* entry = &table->entries[index];
@@ -178,13 +180,13 @@ ObjString* tableFindString(Table* table, const char* chars, int length, uint32_t
             return entry->key;
         }
 
-        index = (index + 1) % table->capacity;
+        index = (index + 1) & table->capacity;
     }
 }
 
 void tableRemoveWhite(Table* table)
 {
-    for (int i = 0; i < table->capacity; i++) {
+    for (int i = 0; i <= table->capacity; i++) {
         Entry* entry = &table->entries[i];
         if (entry->key != NULL && !entry->key->obj.isMarked) {
             tableDelete(table, entry->key);

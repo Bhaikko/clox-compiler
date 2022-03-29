@@ -13,7 +13,7 @@
 
 void markTable(Table* table)
 {
-    for (int i = 0; i < table->capacity; i++) {
+    for (int i = 0; i <= table->capacity; i++) {
         Entry* entry = &table->entries[i];
 
         // Marking key as they are heap allocated too
@@ -45,6 +45,8 @@ void markObject(Obj* object)
     // storing all reachable objects as Gray to traverse them later
     if (vm.grayCapacity < vm.grayCount + 1) {
         vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
+
+        // Changing Size of grayStack
         vm.grayStack = (Obj**)realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
 
         if (vm.grayStack == NULL) {
